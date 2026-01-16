@@ -21,6 +21,23 @@ class TaskDueProvider extends ChangeNotifier {
   final String weeklyProgressRemaining = '6 Pending';
   final double weeklyProgressValue = 0.6;
 
+  // Project Management
+  final List<String> projects = [
+    'College Application Project',
+    'Scholarship Application',
+    'Personal Statement Review',
+    'Interview Preparation',
+  ];
+
+  String _selectedProject = 'College Application Project';
+  String get selectedProject => _selectedProject;
+
+  void setSelectedProject(String project) {
+    _selectedProject = project;
+    notifyListeners();
+    // Here you can add logic to load tasks for the selected project
+  }
+
   // Overview Tasks Data
   final List<Map<String, dynamic>> overviewTasks = [
     {

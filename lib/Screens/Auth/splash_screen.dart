@@ -1,8 +1,8 @@
 // ...existing code...
 import 'package:flutter/material.dart';
-import 'package:teen_theory/Resources/fonts.dart';
-import 'package:teen_theory/Screens/Auth/login_screen.dart';
-import 'package:teen_theory/Utils/helper.dart';
+import 'package:provider/provider.dart';
+import 'package:teen_theory/Providers/AuthProviders/auth_provider.dart';
+import 'package:teen_theory/Resources/assets.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,16 +11,47 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutBack,
+      ),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeIn,
+      ),
+    );
+
+    _animationController.forward();
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      Future.delayed(const Duration(seconds: 2), () {
+        context.read<AuthProvider>().getProfileApiTap(context);
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -29,23 +60,30 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  shape: BoxShape.circle,
+          child: AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        AppImages.logo,
+                        fit: BoxFit.cover,
+                      ),
+                      const SizedBox(height: 20),
+                      // Text(
+                      //   'Teen Theory',
+                      //   style: textStyle(fontSize: 24, fontFamily: AppFonts.interBold),
+                      // ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Teen Theory',
-                style: textStyle(fontSize: 20, fontFamily: AppFonts.interBold),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),

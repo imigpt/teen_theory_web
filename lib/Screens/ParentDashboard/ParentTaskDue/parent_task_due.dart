@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:teen_theory/Providers/ParentProvider/parent_dash_provider.dart';
 import 'package:teen_theory/Resources/colors.dart';
 import 'package:teen_theory/Resources/fonts.dart';
 
@@ -11,10 +13,44 @@ class ParentTaskDue extends StatefulWidget {
 
 class _ParentTaskDueState extends State<ParentTaskDue> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ParentDashProvider>().getParentProfileApiTap();
+    });
+  }
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      body: SafeArea(
+      body: Consumer<ParentDashProvider>(
+        builder: (context, provider, child) {
+          // Get all projects
+          final assignedProjects = provider.parentProfileData?.data?.child?.assignedProjects ?? [];
+          
+          // Calculate overall stats
+          int totalTasks = 0;
+          int completedTasks = 0;
+          int pendingTasks = 0;
+          
+          for (var project in assignedProjects) {
+            if (project.milestones != null) {
+              for (var milestone in project.milestones!) {
+                if (milestone.tasks != null) {
+                  totalTasks += milestone.tasks!.length;
+                  completedTasks += milestone.tasks!.where((t) => t.status?.toLowerCase() == 'completed').length;
+                  pendingTasks += milestone.tasks!.where((t) => t.status?.toLowerCase() != 'completed').length;
+                }
+              }
+            }
+          }
+
+          // // Calculate percentages
+          // final completedPercentage = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toStringAsFixed(0) : '0';
+          // final pendingPercentage = totalTasks > 0 ? ((pendingTasks / totalTasks) * 100).toStringAsFixed(0) : '0';
+          // final overduePercentage = '0'; // Can be calculated if needed
+
+          return SafeArea(
         child: Column(
           children: [
             // Header
@@ -62,149 +98,212 @@ class _ParentTaskDueState extends State<ParentTaskDue> {
                     const SizedBox(height: 16),
 
                     // Stats Cards
-                    Row(
-                      children: [
-                        Expanded(child: _buildStatCard('67%', 'Completed')),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildStatCard('25%', 'Pending')),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildStatCard('8%', 'Overdue')),
-                      ],
-                    ),
+                    // Row(
+                    //   children: [
+                    //     Expanded(child: _buildStatCard('$completedPercentage%', 'Completed')),
+                    //     const SizedBox(width: 12),
+                    //     Expanded(child: _buildStatCard('$pendingPercentage%', 'Pending')),
+                    //     const SizedBox(width: 12),
+                    //     Expanded(child: _buildStatCard('$overduePercentage%', 'Overdue')),
+                    //   ],
+                    // ),
 
-                    const SizedBox(height: 32),
+                    // const SizedBox(height: 32),
 
-                    // Overdue Tasks Section
-                    const Text(
-                      'Overdue Tasks',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: AppFonts.interBold,
-                        color: AppColors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    // Projects with Milestones and Tasks
+                    if (assignedProjects.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(40.0),
+                          child: Text(
+                            'No projects available',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontFamily: AppFonts.interRegular,
+                              color: AppColors.lightGrey2,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ...assignedProjects.map((project) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Project Name Header
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.black,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.folder_outlined,
+                                    color: AppColors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      project.title ?? 'Untitled Project',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: AppFonts.interBold,
+                                        color: AppColors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
 
-                    _buildTaskCard(
-                      title: 'Submit Essay Draft',
-                      subtitle: 'Standford Application',
-                      dueDate: 'Due: Oct 14',
-                      status: 'Overdue',
-                      statusColor: const Color(0xFFFFE5E5),
-                      statusTextColor: const Color(0xFFE33629),
-                    ),
+                            // Milestones
+                            if (project.milestones != null && project.milestones!.isNotEmpty)
+                              ...project.milestones!.map((milestone) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(left: 16, bottom: 24),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Milestone Name
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: const BoxDecoration(
+                                              color: AppColors.black,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              milestone.name ?? 'Untitled Milestone',
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                fontFamily: AppFonts.interBold,
+                                                color: AppColors.black,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
 
-                    const SizedBox(height: 12),
+                                      // Tasks in this milestone
+                                      if (milestone.tasks != null && milestone.tasks!.isNotEmpty)
+                                        ...milestone.tasks!.map((task) {
+                                          final dueDate = task.dueDate != null 
+                                              ? DateTime.tryParse(task.dueDate.toString())
+                                              : milestone.dueDate;
+                                          final status = task.status?.toLowerCase() == 'completed' 
+                                              ? 'Completed' 
+                                              : 'Pending';
+                                          
+                                          return Padding(
+                                            padding: const EdgeInsets.only(left: 16, bottom: 12),
+                                            child: _buildTaskCard(
+                                              title: task.title ?? 'Untitled Task',
+                                              subtitle: milestone.name ?? 'Milestone',
+                                              dueDate: _formatDueDate(dueDate),
+                                              status: status,
+                                              statusColor: status == 'Completed' 
+                                                  ? const Color(0xFFE8F5E9) 
+                                                  : const Color(0xFFE8E8E8),
+                                              statusTextColor: status == 'Completed' 
+                                                  ? const Color(0xFF4CAF50) 
+                                                  : AppColors.lightGrey2,
+                                            ),
+                                          );
+                                        })
+                                      else
+                                        const Padding(
+                                          padding: EdgeInsets.only(left: 16),
+                                          child: Text(
+                                            'No tasks in this milestone',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontFamily: AppFonts.interRegular,
+                                              color: AppColors.lightGrey2,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              })
+                            else
+                              const Padding(
+                                padding: EdgeInsets.only(left: 16, bottom: 16),
+                                child: Text(
+                                  'No milestones in this project',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontFamily: AppFonts.interRegular,
+                                    color: AppColors.lightGrey2,
+                                  ),
+                                ),
+                              ),
 
-                    _buildTaskCard(
-                      title: 'Submit Essay Draft',
-                      subtitle: 'Standford Application',
-                      dueDate: 'Due: Oct 14',
-                      status: 'Overdue',
-                      statusColor: const Color(0xFFFFE5E5),
-                      statusTextColor: const Color(0xFFE33629),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Due Today Section
-                    const Text(
-                      'Due Today',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: AppFonts.interBold,
-                        color: AppColors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildTaskCard(
-                      title: 'Submit Essay Draft',
-                      subtitle: 'Standford Application',
-                      dueDate: 'Due: Today 11:59 PM',
-                      status: 'Pending',
-                      statusColor: const Color(0xFFE8E8E8),
-                      statusTextColor: AppColors.lightGrey2,
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Upcoming Tasks Section
-                    const Text(
-                      'Upcoming Tasks',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: AppFonts.interBold,
-                        color: AppColors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildTaskCard(
-                      title: 'Practice Interview Session',
-                      subtitle: 'Harvard Application',
-                      dueDate: 'Due: 21 Oct',
-                      status: 'Upcoming',
-                      statusColor: const Color(0xFFE8E8E8),
-                      statusTextColor: AppColors.lightGrey2,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _buildTaskCard(
-                      title: 'Practice Interview Session',
-                      subtitle: 'Harvard Application',
-                      dueDate: 'Due: 21 Oct',
-                      status: 'Upcoming',
-                      statusColor: const Color(0xFFE8E8E8),
-                      statusTextColor: AppColors.lightGrey2,
-                    ),
+                            const SizedBox(height: 16),
+                          ],
+                        );
+                      }),
 
                     const SizedBox(height: 24),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
+            ),],)
+          );
+        },
       ),
     );
   }
 
-  Widget _buildStatCard(String percentage, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-      decoration: BoxDecoration(
-        color: AppColors.black,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Text(
-            percentage,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              fontFamily: AppFonts.interBold,
-              color: AppColors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontFamily: AppFonts.interRegular,
-              color: AppColors.white,
-            ),
-          ),
-        ],
-      ),
-    );
+  String _formatDueDate(DateTime? date) {
+    if (date == null) return 'No due date';
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return 'Due: ${date.day} ${months[date.month - 1]}';
   }
+
+  // Widget _buildStatCard(String percentage, String label) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+  //     decoration: BoxDecoration(
+  //       color: AppColors.black,
+  //       borderRadius: BorderRadius.circular(16),
+  //     ),
+  //     child: Column(
+  //       children: [
+  //         Text(
+  //           percentage,
+  //           style: const TextStyle(
+  //             fontSize: 24,
+  //             fontWeight: FontWeight.bold,
+  //             fontFamily: AppFonts.interBold,
+  //             color: AppColors.white,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 4),
+  //         Text(
+  //           label,
+  //           style: const TextStyle(
+  //             fontSize: 12,
+  //             fontFamily: AppFonts.interRegular,
+  //             color: AppColors.white,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildTaskCard({
     required String title,

@@ -102,6 +102,85 @@ class TaskDue extends StatelessWidget {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        // Project Name Section
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.lightGrey),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.folder_outlined,
+                                color: Colors.grey.shade600,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Project Name',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: provider.selectedProject,
+                                          isExpanded: true,
+                                          icon: Icon(
+                                            Icons.keyboard_arrow_down,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black,
+                                          ),
+                                          dropdownColor: Colors.white,
+                                          items: provider.projects.map((
+                                            String project,
+                                          ) {
+                                            return DropdownMenuItem<String>(
+                                              value: project,
+                                              child: Text(project),
+                                            );
+                                          }).toList(),
+                                          onChanged: (String? newValue) {
+                                            if (newValue != null) {
+                                              provider.setSelectedProject(
+                                                newValue,
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -820,7 +899,7 @@ class _CompletedTasksSection extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   task['completedDate'],
-                  style: TextStyle(fontSize: 13, color: Colors.green),
+                  style: TextStyle(fontSize: 13, color: AppColors.yellow600),
                 ),
                 const SizedBox(height: 2),
                 Text(
