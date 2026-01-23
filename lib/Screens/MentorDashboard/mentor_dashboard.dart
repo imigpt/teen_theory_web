@@ -586,8 +586,7 @@ class _MentorDashboardState extends State<MentorDashboard> {
                                     ),
                                     child: IconButton(
                                       onPressed: () async {
-                                        print("Joining meeting link: https:${meeting.meetingLink ?? ""}");
-                                      await pvd.openMeetLink(link: "https:${meeting.meetingLink ?? ""}");
+                                      await pvd.openMeetLink(link: meeting.meetingLink ?? "");
                                       },
                                       icon: const Icon(
                                         Icons.videocam,

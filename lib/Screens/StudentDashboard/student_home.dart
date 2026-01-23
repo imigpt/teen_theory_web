@@ -535,11 +535,11 @@ class _StudentHomeState extends State<StudentHome> {
                       Flexible(
                         child: InkWell(
                           onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => MeetingScreen(),
-                              ),
-                            );
+                            // Navigator.of(context).push(
+                            //   MaterialPageRoute(
+                            //     builder: (context) => MeetingScreen(),
+                            //   ),
+                            // );
                           },
                           child: AspectRatio(
                             aspectRatio: 1,
@@ -1030,8 +1030,7 @@ class _StudentHomeState extends State<StudentHome> {
                                           
                                               InkWell(
                                                 onTap: () {
-                                                  print("Joining meeting link3: https:${meetingData.meetingLink ?? ""}");
-                                                  pvd.openMeetLink(link: "https:${meetingData.meetingLink ?? ""}");
+                                                  pvd.openMeetLink(link: meetingData.meetingLink ?? "");
                                                 },
                                                 child: Container(
                                                     padding: EdgeInsets.symmetric(
