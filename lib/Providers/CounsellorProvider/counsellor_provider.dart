@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:teen_theory/Models/CommonModels/all_counsellor_model.dart';
 import 'package:teen_theory/Models/CommonModels/all_mentor_model.dart' as mentor_model;
 import 'package:teen_theory/Models/CommonModels/all_student_model.dart' as student_model;
@@ -126,18 +127,6 @@ class CounsellorProvider with ChangeNotifier {
       }
       if (milestone.weight.isEmpty || int.tryParse(milestone.weight) == null) {
         return 'Please enter valid weightage for Milestone ${i + 1}';
-      }
-      
-      // Validate tasks within milestone
-      if (milestone.tasks.isEmpty) {
-        return 'Please add at least one task for Milestone ${i + 1}';
-      }
-      
-      for (int j = 0; j < milestone.tasks.length; j++) {
-        final task = milestone.tasks[j];
-        if (task.title.trim().isEmpty) {
-          return 'Please enter title for Task ${j + 1} in Milestone ${i + 1}';
-        }
       }
     }
     
@@ -499,7 +488,9 @@ class CounsellorProvider with ChangeNotifier {
 
 
   Future pickedFileFromDevice () async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      withData: kIsWeb,
+    );
     if (result != null) {
       _pickedFiles = result;
       notifyListeners();
@@ -725,10 +716,17 @@ class CounsellorProvider with ChangeNotifier {
 
     if (_pickedFiles != null && _pickedFiles!.files.isNotEmpty) {
       final file = _pickedFiles!.files.first;
-      _attachedFiles = await MultipartFile.fromFile(
-        file.path!,
-        filename: file.name,
-      );
+      if (kIsWeb) {
+        _attachedFiles = MultipartFile.fromBytes(
+          file.bytes!,
+          filename: file.name,
+        );
+      } else {
+        _attachedFiles = await MultipartFile.fromFile(
+          file.path!,
+          filename: file.name,
+        );
+      }
     }
     setBtnLoading(true);
     try {

@@ -9,7 +9,6 @@ import 'package:teen_theory/Providers/StudentProviders/student_notification_prov
 import 'package:teen_theory/Resources/colors.dart';
 import 'package:teen_theory/Resources/fonts.dart';
 import 'package:teen_theory/Screens/StudentDashboard/ActiveProjects/active_projects.dart';
-import 'package:teen_theory/Screens/StudentDashboard/Meetings/meeting.dart';
 import 'package:teen_theory/Screens/StudentDashboard/Profile/student_profile.dart';
 import 'package:teen_theory/Screens/StudentDashboard/StudentNotification/student_notification.dart';
 import 'package:teen_theory/Services/apis.dart';
