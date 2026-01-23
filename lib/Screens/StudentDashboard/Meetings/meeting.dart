@@ -62,7 +62,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                _buildHeroTile(provider),
+                // _buildHeroTile(provider),
                 const SizedBox(height: 24),
                 _buildSectionTitle('Upcoming Meetings', provider.upcomingMeetings.length),
                 const SizedBox(height: 12),

@@ -509,42 +509,11 @@ void setCreateTicketLoading (bool value){
    }
 
  Future<void> openMeetNew() async {
-  final url = Uri.parse("https://meet.google.com/new");
-
-  try {
-    // Open in external application (Google Meet app will open)
-    await launchUrl(
-      url,
-      mode: LaunchMode.platformDefault,
-    );
-  } catch (e) {
-    print("Error launching URL: $e");
-  }
+  await openExternalLink("https://meet.google.com/new");
 }
 
  Future<void> openMeetLink({required String link}) async {
-  // Ensure URL has proper protocol
-  String formattedLink = link.trim();
-  if (!formattedLink.startsWith('http://') && !formattedLink.startsWith('https://')) {
-    formattedLink = 'https://$formattedLink';
-  }
-  
-  final url = Uri.parse(formattedLink);
-
-  try {
-    // On web, use platformDefault which opens in new tab
-    // On mobile, use externalApplication to open in browser/app
-    final launched = await launchUrl(
-      url,
-      mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
-    );
-
-    if (!launched) {
-      print("Failed to open meeting link: $formattedLink");
-    }
-  } catch (e) {
-    print("Error launching meeting URL: $e");
-  }
+  await openExternalLink(link);
 }
 
 bool _meetingLoader = false;
