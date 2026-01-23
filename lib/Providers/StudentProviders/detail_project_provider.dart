@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:teen_theory/Models/CommonModels/user_meeting_model.dart';
@@ -10,6 +11,8 @@ import 'package:teen_theory/Utils/helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 import '../../Models/CommonModels/profile_model.dart';
 
@@ -152,21 +155,26 @@ class DetailProjectProvider extends ChangeNotifier {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg'],
+        withData: kIsWeb, // Load bytes for web platform
       );
 
-      if (result != null && result.files.single.path != null) {
-        _taskFiles[taskIndex] = result.files.first;
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        // On web, check for bytes; on mobile, check for path
+        if (kIsWeb ? file.bytes != null : file.path != null) {
+          _taskFiles[taskIndex] = file;
 
-        // Mark task as completed
-        if (taskIndex < tasks.length) {
-          tasks[taskIndex]['status'] = 'completed';
-          tasks[taskIndex]['date'] =
-              'Completed on ${DateTime.now().day} ${_getMonthName(DateTime.now().month)}, ${DateTime.now().year}';
-          tasks[taskIndex]['time'] = 'Just now';
-          tasks[taskIndex].remove('progress');
+          // Mark task as completed
+          if (taskIndex < tasks.length) {
+            tasks[taskIndex]['status'] = 'completed';
+            tasks[taskIndex]['date'] =
+                'Completed on ${DateTime.now().day} ${_getMonthName(DateTime.now().month)}, ${DateTime.now().year}';
+            tasks[taskIndex]['time'] = 'Just now';
+            tasks[taskIndex].remove('progress');
+          }
+
+          notifyListeners();
         }
-
-        notifyListeners();
       }
     } catch (e) {
       debugPrint('Error picking file: $e');
@@ -428,13 +436,33 @@ void setCreateTicketLoading (bool value){
   ) async {
     setCompletingTask(true, milestoneId);
     
+    // Prepare attachment based on platform
+    dynamic attachmentData = "";
+    if (attachment != null) {
+      if (kIsWeb) {
+        // For web, use bytes
+        if (attachment.bytes != null) {
+          attachmentData = MultipartFile.fromBytes(
+            attachment.bytes!,
+            filename: attachment.name,
+          );
+        }
+      } else {
+        // For mobile/desktop, use path
+        if (attachment.path != null) {
+          attachmentData = await MultipartFile.fromFile(
+            attachment.path!,
+            filename: attachment.name,
+          );
+        }
+      }
+    }
+    
     FormData body = FormData.fromMap({
       "project_id" : projectId.toString(),
       "milestone_id" : milestoneId,
       "status" : "completed",
-      "attachment" : attachment != null && attachment.path != null 
-          ? await MultipartFile.fromFile(attachment.path!, filename: attachment.name)
-          : "",
+      "attachment" : attachmentData,
     });
     
     try{
@@ -495,19 +523,28 @@ void setCreateTicketLoading (bool value){
 }
 
  Future<void> openMeetLink({required String link}) async {
-  final url = Uri.parse(link);
-
-  // First try normally
-  if (await launchUrl(url, mode: LaunchMode.externalApplication)) {
-    return;
+  // Ensure URL has proper protocol
+  String formattedLink = link.trim();
+  if (!formattedLink.startsWith('http://') && !formattedLink.startsWith('https://')) {
+    formattedLink = 'https://$formattedLink';
   }
+  
+  final url = Uri.parse(formattedLink);
 
-  // If fails → try browser mode
-  if (await launchUrl(url, mode: LaunchMode.inAppWebView)) {
-    return;
+  try {
+    // On web, use platformDefault which opens in new tab
+    // On mobile, use externalApplication to open in browser/app
+    final launched = await launchUrl(
+      url,
+      mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+    );
+
+    if (!launched) {
+      print("Failed to open meeting link: $formattedLink");
+    }
+  } catch (e) {
+    print("Error launching meeting URL: $e");
   }
-
-  print("Failed to open Google Meet");
 }
 
 bool _meetingLoader = false;
@@ -664,53 +701,101 @@ UserMeetingModel? get filteredMeetingData => _filteredMeetingData;
     setDownloadingFile(true);
 
     try {
-      // Get the downloads directory
-      Directory? directory;
-      if (Platform.isAndroid) {
-        directory = await getExternalStorageDirectory();
-        // Navigate to Downloads folder on Android
-        String newPath = "";
-        List<String> paths = directory!.path.split("/");
-        for (int i = 1; i < paths.length; i++) {
-          String folder = paths[i];
-          if (folder != "Android") {
-            newPath += "/" + folder;
+      if (kIsWeb) {
+        // Web platform - download file via Dio and create blob
+        try {
+          final dio = Dio();
+          
+          // Download file as bytes
+          final response = await dio.get(
+            fileUrl,
+            options: Options(
+              responseType: ResponseType.bytes,
+              followRedirects: true,
+              validateStatus: (status) => status! < 500,
+            ),
+          );
+
+          if (response.statusCode == 200) {
+            // Extract filename from URL
+            String fileName = fileUrl.split('/').last;
+            if (!fileName.contains('.')) {
+              fileName = 'documentation.pdf';
+            }
+
+            // Create blob and download
+            final bytes = response.data;
+            final blob = html.Blob([bytes]);
+            final url = html.Url.createObjectUrlFromBlob(blob);
+            final anchor = html.AnchorElement(href: url)
+              ..setAttribute('download', fileName)
+              ..style.display = 'none';
+            
+            html.document.body?.children.add(anchor);
+            anchor.click();
+            html.document.body?.children.remove(anchor);
+            html.Url.revokeObjectUrl(url);
+            
+            setDownloadingFile(false);
+            showToast("File downloaded successfully", type: toastType.success);
           } else {
-            break;
+            setDownloadingFile(false);
+            showToast("File not found on server", type: toastType.error);
           }
+        } catch (e) {
+          AppLogger.error(message: "Web download error: $e");
+          setDownloadingFile(false);
+          showToast("Failed to download file", type: toastType.error);
         }
-        newPath = newPath + "/Download";
-        directory = Directory(newPath);
       } else {
-        directory = await getApplicationDocumentsDirectory();
-      }
-
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-
-      // Extract filename from URL
-      String fileName = fileUrl.split('/').last;
-      if (!fileName.contains('.')) {
-        fileName = 'documentation.pdf';
-      }
-
-      String filePath = '${directory.path}/$fileName';
-
-      // Download the file
-      final dio = Dio();
-      await dio.download(
-        fileUrl,
-        filePath,
-        onReceiveProgress: (received, total) {
-          if (total != -1) {
-            print('Download progress: ${(received / total * 100).toStringAsFixed(0)}%');
+        // Mobile/Desktop platform - download to file system
+        Directory? directory;
+        if (Platform.isAndroid) {
+          directory = await getExternalStorageDirectory();
+          // Navigate to Downloads folder on Android
+          String newPath = "";
+          List<String> paths = directory!.path.split("/");
+          for (int i = 1; i < paths.length; i++) {
+            String folder = paths[i];
+            if (folder != "Android") {
+              newPath += "/" + folder;
+            } else {
+              break;
+            }
           }
-        },
-      );
+          newPath = newPath + "/Download";
+          directory = Directory(newPath);
+        } else {
+          directory = await getApplicationDocumentsDirectory();
+        }
 
-      setDownloadingFile(false);
-      showToast("File downloaded successfully to Downloads", type: toastType.success);
+        if (!await directory.exists()) {
+          await directory.create(recursive: true);
+        }
+
+        // Extract filename from URL
+        String fileName = fileUrl.split('/').last;
+        if (!fileName.contains('.')) {
+          fileName = 'documentation.pdf';
+        }
+
+        String filePath = '${directory.path}/$fileName';
+
+        // Download the file
+        final dio = Dio();
+        await dio.download(
+          fileUrl,
+          filePath,
+          onReceiveProgress: (received, total) {
+            if (total != -1) {
+              print('Download progress: ${(received / total * 100).toStringAsFixed(0)}%');
+            }
+          },
+        );
+
+        setDownloadingFile(false);
+        showToast("File downloaded successfully to Downloads", type: toastType.success);
+      }
     } catch (e) {
       AppLogger.error(message: "downloadFile Error: $e");
       setDownloadingFile(false);

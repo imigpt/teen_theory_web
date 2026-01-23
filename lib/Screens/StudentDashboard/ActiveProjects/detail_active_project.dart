@@ -380,13 +380,13 @@ class _DetailActiveProjectView extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                      const SizedBox(height: 30),
+                      // const SizedBox(height: 30),
         
                       // Feedbacks Section
-                      _buildSectionWithKey(
-                        key: provider.feedbacksKey,
-                        child: _FeedbacksSection(provider: provider),
-                      ),
+                      // _buildSectionWithKey(
+                      //   key: provider.feedbacksKey,
+                      //   child: _FeedbacksSection(provider: provider),
+                      // ),
         
                       const SizedBox(height: 20),
         

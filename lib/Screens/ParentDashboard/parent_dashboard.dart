@@ -6,7 +6,6 @@ import 'package:teen_theory/Screens/ParentDashboard/ActiveProjects/detail_active
 import 'package:teen_theory/Screens/ParentDashboard/ActiveProjects/parent_active_projects.dart';
 import 'package:teen_theory/Screens/ParentDashboard/ParentTaskDue/parent_task_due.dart';
 import 'package:teen_theory/Screens/ParentDashboard/ProfileScreens/profile_screen.dart';
-import 'package:teen_theory/Screens/ParentDashboard/RequestMeeting/request_meeting.dart';
 import 'package:teen_theory/Screens/ParentDashboard/ViewProgress/view_progress.dart';
 import 'package:teen_theory/Services/apis.dart';
 import 'package:teen_theory/Shimmer/ParentShimmer/parent_dashboard_shimmer.dart';
@@ -214,8 +213,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                                   ? CircleAvatar(
                                       radius: 24,
                                       backgroundImage: NetworkImage("${Apis.baseUrl}${profileData.child!.profilePhoto!}"),
-                                    )
-                                  : Center(
+                                    ) : Center(
                                       child: Text('👨‍🎓', style: TextStyle(fontSize: 24)),
                                     ),
                             ),
@@ -362,20 +360,20 @@ class _ParentDashboardState extends State<ParentDashboard> {
                       Row(
                         children: [
                           // Request Meeting Button
-                          Expanded(
-                            child: _buildQuickActionButton(
-                              context,
-                              'Request Meeting',
-                              Icons.calendar_today_outlined,
-                              () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => RequestMeeting(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+                          // Expanded(
+                          //   child: _buildQuickActionButton(
+                          //     context,
+                          //     'Request Meeting',
+                          //     Icons.calendar_today_outlined,
+                          //     () {
+                          //       Navigator.of(context).push(
+                          //         MaterialPageRoute(
+                          //           builder: (context) => RequestMeeting(),
+                          //         ),
+                          //       );
+                          //     },
+                          //   ),
+                          // ),
                           const SizedBox(width: 12),
                           // View Progress Button
                           Expanded(

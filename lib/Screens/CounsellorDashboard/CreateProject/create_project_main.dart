@@ -158,15 +158,15 @@ class _CreateProjectMainState extends State<CreateProjectMain> {
                               final counsellorEmail = authPvd.profileData?.data?.email;
                               pvd.createProjectApiTap(context, counsellorEmail: counsellorEmail);
                             } else {
-                              // Validate step 3 before proceeding
-                              if (pvd.currentStep == 3 && pvd.totalWeightage > 100) {
+                              // Validate current step before proceeding
+                              final validationError = pvd.validateCurrentStep();
+                              if (validationError != null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(
-                                      'Total weightage cannot exceed 100%. Currently ${pvd.totalWeightage}%',
-                                    ),
+                                    content: Text(validationError),
                                     backgroundColor: Colors.red,
                                     behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(seconds: 3),
                                   ),
                                 );
                                 return;

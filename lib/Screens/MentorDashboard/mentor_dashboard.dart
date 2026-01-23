@@ -325,14 +325,14 @@ class _MentorDashboardState extends State<MentorDashboard> {
                       "📁 Assigned Projects",
                       style: textStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
-                    Text(
-                      "View All",
-                      style: textStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.blue,
-                      ),
-                    ),
+                    // Text(
+                    //   "View All",
+                    //   style: textStyle(
+                    //     fontSize: 14,
+                    //     fontWeight: FontWeight.w400,
+                    //     color: Colors.blue,
+                    //   ),
+                    // ),
                   ],
                 ),
                 Divider(),
@@ -437,14 +437,14 @@ class _MentorDashboardState extends State<MentorDashboard> {
                       "📅 Meetings",
                       style: textStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
-                    Text(
-                      "View all",
-                      style: textStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.blue,
-                      ),
-                    ),
+                    // Text(
+                    //   "View all",
+                    //   style: textStyle(
+                    //     fontSize: 14,
+                    //     fontWeight: FontWeight.w400,
+                    //     color: Colors.blue,
+                    //   ),
+                    // ),
                   ],
                 ),
                 Divider(),

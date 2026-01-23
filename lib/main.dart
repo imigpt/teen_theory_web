@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StudentChatProvider()),
       ],
       child: MaterialApp(
-        title: 'Flutter Demo',
+        title: 'TADS - The Centre Of Career Excellence',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         ),

@@ -279,50 +279,50 @@ class _ParentActiveProjectsState extends State<ParentActiveProjects> {
                   const SizedBox(height: 16),
       
                   hSpace(height: 20),
-                  Container(
-                height: 100,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.black,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Need to discuss a Progress?",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "Request a meeting with counsellor?",
-                            style: TextStyle(color: Colors.white, fontSize: 7),
-                          ),
-                        ],
-                      ),
-                      CustomButton(
-                        showBackground: true,
-                        bgColor: Colors.white,
-                        title: "Request Meeting",
-                        fontsize: 12,
-                        height: 30,
-                        titleColor: Colors.black,
-                        width: 120,
-                      ),
-                    ],
-                  ),
-                ),
-                  ),
+              // Container(
+              //   height: 100,
+              //   width: double.infinity,
+              //   decoration: BoxDecoration(
+              //     borderRadius: BorderRadius.circular(10),
+              //     color: Colors.black,
+              //   ),
+              //   child: Padding(
+              //     padding: const EdgeInsets.all(8.0),
+              //     child: Row(
+              //       crossAxisAlignment: CrossAxisAlignment.center,
+              //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //       children: [
+              //         Column(
+              //           mainAxisAlignment: MainAxisAlignment.center,
+              //           crossAxisAlignment: CrossAxisAlignment.start,
+              //           children: [
+              //             Text(
+              //               "Need to discuss a Progress?",
+              //               style: TextStyle(
+              //                 color: Colors.white,
+              //                 fontSize: 12,
+              //                 fontWeight: FontWeight.bold,
+              //               ),
+              //             ),
+              //             Text(
+              //               "Request a meeting with counsellor?",
+              //               style: TextStyle(color: Colors.white, fontSize: 7),
+              //             ),
+              //           ],
+              //         ),
+              //         CustomButton(
+              //           showBackground: true,
+              //           bgColor: Colors.white,
+              //           title: "Request Meeting",
+              //           fontsize: 12,
+              //           height: 30,
+              //           titleColor: Colors.black,
+              //           width: 120,
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              //     ),
                 ],
               ),
             );

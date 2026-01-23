@@ -170,6 +170,9 @@ class _CounsellorDashboardState extends State<CounsellorDashboard> {
                       subtitle: pvd.allMyProjectData?.data?.length.toString() ?? "0",
                     ),
                     CustomBoxes(
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(builder: (context) => ApprovedTasksPage()));
+                      },
                       title: "Pending\nTasks",
                       imageIcon: AppIcons.openFolder,
                       subtitle: "0",

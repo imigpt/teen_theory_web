@@ -82,6 +82,127 @@ class CounsellorProvider with ChangeNotifier {
     return total;
   }
 
+  // ==================== STEP VALIDATION METHODS ====================
+  
+  /// Validates Step 1: Project Basics
+  /// Returns error message if validation fails, null if valid
+  String? validateStep1() {
+    if (projectTitleController.text.trim().isEmpty) {
+      return 'Please enter project title';
+    }
+    if (_selectedProjectType.isEmpty) {
+      return 'Please select project type';
+    }
+    if (descriptionController.text.trim().isEmpty) {
+      return 'Please enter project description';
+    }
+    return null;
+  }
+
+  /// Validates Step 2: Assign People & Access
+  String? validateStep2() {
+    if (assignedStudents.isEmpty) {
+      return 'Please assign at least one student';
+    }
+    if (assignedMentor == null) {
+      return 'Please assign a mentor';
+    }
+    return null;
+  }
+
+  /// Validates Step 3: Milestones & Tasks
+  String? validateStep3() {
+    if (milestones.isEmpty) {
+      return 'Please add at least one milestone';
+    }
+    
+    for (int i = 0; i < milestones.length; i++) {
+      final milestone = milestones[i];
+      if (milestone.name.trim().isEmpty) {
+        return 'Please enter name for Milestone ${i + 1}';
+      }
+      if (milestone.dueDate == null) {
+        return 'Please select due date for Milestone ${i + 1}';
+      }
+      if (milestone.weight.isEmpty || int.tryParse(milestone.weight) == null) {
+        return 'Please enter valid weightage for Milestone ${i + 1}';
+      }
+      
+      // Validate tasks within milestone
+      if (milestone.tasks.isEmpty) {
+        return 'Please add at least one task for Milestone ${i + 1}';
+      }
+      
+      for (int j = 0; j < milestone.tasks.length; j++) {
+        final task = milestone.tasks[j];
+        if (task.title.trim().isEmpty) {
+          return 'Please enter title for Task ${j + 1} in Milestone ${i + 1}';
+        }
+      }
+    }
+    
+    if (totalWeightage != 100) {
+      return 'Total weightage must be exactly 100%. Currently $totalWeightage%';
+    }
+    
+    return null;
+  }
+
+  /// Validates Step 4: Deliverables (optional - can skip)
+  String? validateStep4() {
+    // Deliverables are optional, so no strict validation
+    // But if user is adding one, validate the current form
+    return null;
+  }
+
+  /// Validates Step 5: Resources (optional - can skip)
+  String? validateStep5() {
+    // Resources are optional, so no strict validation
+    return null;
+  }
+
+  /// Validates Step 6: Scheduling & Sessions
+  String? validateStep6() {
+    if (_selectedSessionType == null || _selectedSessionType!.isEmpty) {
+      return 'Please select a session type';
+    }
+    if (_preferredTiming == null || _preferredTiming!.isEmpty) {
+      return 'Please select preferred timing';
+    }
+    if (_selectedDuration == null || _selectedDuration!.isEmpty) {
+      return 'Please select session duration';
+    }
+    return null;
+  }
+
+  /// Validates Step 7: Notifications (no validation needed - checkboxes)
+  String? validateStep7() {
+    // No strict validation needed for notification settings
+    return null;
+  }
+
+  /// Master validation method - validates current step
+  String? validateCurrentStep() {
+    switch (_currentStep) {
+      case 1:
+        return validateStep1();
+      case 2:
+        return validateStep2();
+      case 3:
+        return validateStep3();
+      case 4:
+        return validateStep4();
+      case 5:
+        return validateStep5();
+      case 6:
+        return validateStep6();
+      case 7:
+        return validateStep7();
+      default:
+        return null;
+    }
+  }
+
   void nextStep() {
     // Validate step 3 (Milestones) before proceeding
     if (currentStep == 3 && totalWeightage > 100) {
