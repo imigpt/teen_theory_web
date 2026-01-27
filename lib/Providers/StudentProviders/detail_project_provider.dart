@@ -8,11 +8,13 @@ import 'package:teen_theory/Services/dio_client.dart';
 import 'package:teen_theory/Utils/app_logger.dart';
 import 'package:teen_theory/Utils/connection_dectactor.dart';
 import 'package:teen_theory/Utils/helper.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:teen_theory/Models/CommonModels/all_meeting_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+// Conditional import for web
+import 'package:teen_theory/Utils/web_file_download.dart'
+    if (dart.library.html) 'package:teen_theory/Utils/web_file_download_web.dart'
+    as web_download;
 
 import '../../Models/CommonModels/profile_model.dart';
 
@@ -36,8 +38,8 @@ class DetailProjectProvider extends ChangeNotifier {
 
   Map<int, PlatformFile?> get taskFiles => _taskFiles;
 
-    bool isTaskSubmitted(int taskIndex) => _submittedTasks.contains(taskIndex);
-    bool canSubmitTask(int taskIndex) =>
+  bool isTaskSubmitted(int taskIndex) => _submittedTasks.contains(taskIndex);
+  bool canSubmitTask(int taskIndex) =>
       _taskFiles[taskIndex] != null && !_submittedTasks.contains(taskIndex);
 
   // Sample data
@@ -238,7 +240,7 @@ class DetailProjectProvider extends ChangeNotifier {
   final TextEditingController priorityCtrl = TextEditingController();
   final TextEditingController descriptionCtrl = TextEditingController();
 
-  void disposeControllers () {
+  void disposeControllers() {
     titleCtrl.dispose();
     raisedByCtrl.dispose();
     projectCtrl.dispose();
@@ -247,7 +249,7 @@ class DetailProjectProvider extends ChangeNotifier {
     descriptionCtrl.dispose();
   }
 
-    DateTime createdOn = DateTime.now();
+  DateTime createdOn = DateTime.now();
 
   List<XFile> _attachments = [];
   List<XFile> get attachments => _attachments;
@@ -257,8 +259,7 @@ class DetailProjectProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-    final ImagePicker _picker = ImagePicker();
-
+  final ImagePicker _picker = ImagePicker();
 
   Future<void> pickAttachment(BuildContext context) async {
     // Show dialog to choose camera or gallery
@@ -295,7 +296,7 @@ class DetailProjectProvider extends ChangeNotifier {
         maxHeight: 1920,
         imageQuality: 85,
       );
-      
+
       if (file != null) {
         _attachments.add(file);
         notifyListeners();
@@ -314,79 +315,88 @@ class DetailProjectProvider extends ChangeNotifier {
 
   //........ CREATE TICKETS API CALLS
 
-bool _createTicketLoading = false;
-bool get createTicketLoading => _createTicketLoading;
+  bool _createTicketLoading = false;
+  bool get createTicketLoading => _createTicketLoading;
 
-void setCreateTicketLoading (bool value){
+  void setCreateTicketLoading(bool value) {
     _createTicketLoading = value;
     notifyListeners();
-}
+  }
 
-  void createTicketApiTap (BuildContext context, String? projectName, String? mentor) {
+  void createTicketApiTap(
+    BuildContext context,
+    String? projectName,
+    String? mentor,
+  ) {
     ConnectionDetector.connectCheck().then((value) async {
-        if (value){
-       createTicketApiCall(context, projectName, mentor);
-        } else {
-          showToast("No Internet Connection", type: toastType.error);
-        }
+      if (value) {
+        createTicketApiCall(context, projectName, mentor);
+      } else {
+        showToast("No Internet Connection", type: toastType.error);
+      }
     });
   }
 
-  createTicketApiCall (BuildContext context, String? projectName, String? mentor) async {
-     FormData body = FormData.fromMap({
-        "title" : titleCtrl.text,
-        "project_name" : projectName,
-        "assigned_to" : mentor,
-        "priority" : priorityCtrl.text,
-        "explaination" : descriptionCtrl.text,
-        "attachments" : [
-          for (var file in attachments) 
-            await MultipartFile.fromFile(file.path, filename: file.name)
-        ],
-      });
+  createTicketApiCall(
+    BuildContext context,
+    String? projectName,
+    String? mentor,
+  ) async {
+    FormData body = FormData.fromMap({
+      "title": titleCtrl.text,
+      "project_name": projectName,
+      "assigned_to": mentor,
+      "priority": priorityCtrl.text,
+      "explaination": descriptionCtrl.text,
+      "attachments": [
+        for (var file in attachments)
+          await MultipartFile.fromFile(file.path, filename: file.name),
+      ],
+    });
 
-      print({
-        "title" : titleCtrl.text,
-        "project_name" : projectName,
-        "assigned_to" : mentor,
-        "priority" : priorityCtrl.text,
-        "explaination" : descriptionCtrl.text,
-        "attachments" : [
-          for (var file in attachments) 
-            await MultipartFile.fromFile(file.path, filename: file.name)
-        ],
-      });
-      setCreateTicketLoading(true);
+    print({
+      "title": titleCtrl.text,
+      "project_name": projectName,
+      "assigned_to": mentor,
+      "priority": priorityCtrl.text,
+      "explaination": descriptionCtrl.text,
+      "attachments": [
+        for (var file in attachments)
+          await MultipartFile.fromFile(file.path, filename: file.name),
+      ],
+    });
+    setCreateTicketLoading(true);
 
-    try{
-         DioClient.createTicket(
-          body: body, 
-          onSuccess: (response) {
-            if(response["success"] == true) {
-              setCreateTicketLoading(false);
-              Navigator.of(context).pop();
-              clearTicketData();
-              showToast("Ticket Create successfully", type: toastType.success);
-              notifyListeners();
-            } else {
-              showToast(response["message"], type: toastType.error);
-              setCreateTicketLoading(false);              
-              notifyListeners();
-            }
-          }, onError: (error) {
-            AppLogger.error(message: "createTicketApiCall onError: $error");
+    try {
+      DioClient.createTicket(
+        body: body,
+        onSuccess: (response) {
+          if (response["success"] == true) {
+            setCreateTicketLoading(false);
+            Navigator.of(context).pop();
+            clearTicketData();
+            showToast("Ticket Create successfully", type: toastType.success);
+            notifyListeners();
+          } else {
+            showToast(response["message"], type: toastType.error);
             setCreateTicketLoading(false);
             notifyListeners();
-          });
-
-    }catch(e) {
+          }
+        },
+        onError: (error) {
+          AppLogger.error(message: "createTicketApiCall onError: $error");
+          setCreateTicketLoading(false);
+          notifyListeners();
+        },
+      );
+    } catch (e) {
       AppLogger.error(message: "createTicketApiCall Error: $e");
       setCreateTicketLoading(false);
       notifyListeners();
     }
   }
 
-  clearTicketData () {
+  clearTicketData() {
     titleCtrl.clear();
     raisedByCtrl.clear();
     projectCtrl.clear();
@@ -403,7 +413,8 @@ void setCreateTicketLoading (bool value){
   bool _completingTask = false;
   String? _completingTaskId;
 
-  bool isCompletingTask(String milestoneId) => _completingTask && _completingTaskId == milestoneId;
+  bool isCompletingTask(String milestoneId) =>
+      _completingTask && _completingTaskId == milestoneId;
 
   void setCompletingTask(bool value, String? milestoneId) {
     _completingTask = value;
@@ -419,8 +430,14 @@ void setCreateTicketLoading (bool value){
     PlatformFile? attachment,
   ) async {
     ConnectionDetector.connectCheck().then((value) {
-      if(value){
-        completedTaskApiCall(context, projectId, milestoneId, taskIndex, attachment);
+      if (value) {
+        completedTaskApiCall(
+          context,
+          projectId,
+          milestoneId,
+          taskIndex,
+          attachment,
+        );
       } else {
         showToast("Internet not available", type: toastType.error);
       }
@@ -435,7 +452,7 @@ void setCreateTicketLoading (bool value){
     PlatformFile? attachment,
   ) async {
     setCompletingTask(true, milestoneId);
-    
+
     // Prepare attachment based on platform
     dynamic attachmentData = "";
     if (attachment != null) {
@@ -457,38 +474,44 @@ void setCreateTicketLoading (bool value){
         }
       }
     }
-    
+
     FormData body = FormData.fromMap({
-      "project_id" : projectId.toString(),
-      "milestone_id" : milestoneId,
-      "status" : "completed",
-      "attachment" : attachmentData,
+      "project_id": projectId.toString(),
+      "milestone_id": milestoneId,
+      "status": "completed",
+      "attachment": attachmentData,
     });
-    
-    try{
+
+    try {
       DioClient.completeTaskApi(
-        body: body, 
+        body: body,
         onSuccess: (response) {
-          if(response["success"] == true) {
+          if (response["success"] == true) {
             setTaskSubmissionState(taskIndex, true);
             setCompletingTask(false, null);
-            showToast("Task submitted for approval successfully", type: toastType.success);
+            showToast(
+              "Task submitted for approval successfully",
+              type: toastType.success,
+            );
             notifyListeners();
           } else {
-            showToast(response["message"] ?? "Failed to submit task", type: toastType.error);
+            showToast(
+              response["message"] ?? "Failed to submit task",
+              type: toastType.error,
+            );
             setCompletingTask(false, null);
             notifyListeners();
           }
-        }, 
+        },
         onError: (error) {
           AppLogger.error(message: "completedTaskApiCall onError: $error");
           showToast("Failed to submit task", type: toastType.error);
           setTaskSubmissionState(taskIndex, false);
           setCompletingTask(false, null);
           notifyListeners();
-        });
-
-    } catch(e) {
+        },
+      );
+    } catch (e) {
       AppLogger.error(message: "completedTaskApiCall Error: $e");
       showToast("Failed to submit task", type: toastType.error);
       setTaskSubmissionState(taskIndex, false);
@@ -500,118 +523,267 @@ void setCreateTicketLoading (bool value){
   //.......................MEETING SECTION.......................//
   TextEditingController meetingTitleController = TextEditingController();
   TextEditingController meetingLinkController = TextEditingController();
-   DateTime? _selectedDateTime;
-   DateTime? get selectedDateTime => _selectedDateTime;
+  DateTime? _selectedDateTime;
+  DateTime? get selectedDateTime => _selectedDateTime;
 
-   void setSelectedDateTime(DateTime dateTime) {
+  String? _selectedTimeSlot;
+  String? get selectedTimeSlot => _selectedTimeSlot;
+
+  AllMeetingModel? _allMeetingsData;
+  bool _loadingMeetings = false;
+  Set<String> _bookedTimeSlots = {};
+
+  Set<String> get bookedTimeSlots => _bookedTimeSlots;
+
+  void setSelectedDateTime(DateTime dateTime) {
     _selectedDateTime = dateTime;
     notifyListeners();
-   }
+  }
 
- Future<void> openMeetNew() async {
-  await openExternalLink("https://meet.google.com/new");
-}
+  void setSelectedTimeSlot(String timeSlot) {
+    _selectedTimeSlot = timeSlot;
+    // Parse the time slot and create a DateTime for today with that time
+    final now = DateTime.now();
+    final timeParts = timeSlot.split(' - ')[0].split(':');
+    final hour = int.parse(timeParts[0]);
+    final minute = int.parse(timeParts[1].split(' ')[0]);
+    final isPM = timeSlot.contains('PM');
 
- Future<void> openMeetLink({required String link}) async {
-  await openExternalLink(link);
-}
-
-bool _meetingLoader = false;
-bool get meetingLoader => _meetingLoader;
-
-void setMeetingLoader(bool value) {
-  _meetingLoader = value;
-  notifyListeners();
-}
-
-void CreateMeetingLinkApiTap(BuildContext context, {required String projectName, required String counsellorEmail, required AssignedMentor projectMentor}) {
-  ConnectionDetector.connectCheck().then((value) {
-    if(value) {
-      createMeetingLinkApiCall(context, projectName: projectName, counsellorEmail: counsellorEmail, projectMentor: projectMentor);
-    } else {
-      showToast("Internet not available", type: toastType.error);
+    int adjustedHour = hour;
+    if (isPM && hour != 12) {
+      adjustedHour = hour + 12;
+    } else if (!isPM && hour == 12) {
+      adjustedHour = 0;
     }
-  });
-}
 
-createMeetingLinkApiCall(
-  BuildContext context,
-  {
-  required String projectName,
-  required String counsellorEmail,
-  required AssignedMentor projectMentor
-}) async {
-  if(meetingTitleController.text.isEmpty) {
-    showToast("Please enter meeting title", type: toastType.error);
-    return;
-  }
-
-  if(_selectedDateTime == null) {
-    showToast("Please select date and time", type: toastType.error);
-    return;
-  }
-
-  if(meetingLinkController.text.isEmpty) {
-    showToast("Please enter meeting link", type: toastType.error);
-    return;
-  }
-
-  Map<String, dynamic> body = {
-    "title" : meetingTitleController.text,
-    "date_time" : _selectedDateTime!.toIso8601String(),
-    "meeting_link" : meetingLinkController.text,
-    "project_name" : projectName,
-    "project_counsellor_email" : counsellorEmail,
-    "project_mentor" : projectMentor,
-  };
-
-  setMeetingLoader(true);
-  try{
-    DioClient.createMeetingLink(
-    body: body,
-    onSuccess: (response) {
-      if(response["success"] == true) {
-        showToast("Meeting created successfully", type: toastType.success);
-        Navigator.of(context).pop();
-        filteredMeetingLinkApiTap(context);
-        setMeetingLoader(false);
-        notifyListeners();
-      } else {
-        showToast(response["message"] ?? "Failed to create meeting link", type: toastType.error);
-        setMeetingLoader(false);
-        notifyListeners();
-      }
-    }, onError: (error) {
-      AppLogger.error(message: "createMeetingLinkApiCall onError: $error");
-      showToast("Failed to create meeting link", type: toastType.error);
-      setMeetingLoader(false);
-      notifyListeners();
-    });
-
-  }catch (e) {
-    AppLogger.error(message: "createMeetingLinkApiCall Error: $e");
-    setMeetingLoader(false);
+    _selectedDateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      adjustedHour,
+      minute,
+    );
     notifyListeners();
   }
-}
 
-//.............filtered Meeting Link...................//
+  List<String> generateTimeSlots() {
+    final List<String> slots = [];
+    for (int hour = 0; hour < 24; hour++) {
+      for (int minute = 0; minute < 60; minute += 30) {
+        final startTime = TimeOfDay(hour: hour, minute: minute);
+        final endTime = minute == 30
+            ? TimeOfDay(hour: hour + 1, minute: 0)
+            : TimeOfDay(hour: hour, minute: 30);
 
-bool _filteredMeetingLoader = false;
-bool get filteredMeetingLoader => _filteredMeetingLoader;
+        final startFormatted = _formatTimeOfDay(startTime);
+        final endFormatted = _formatTimeOfDay(endTime);
+        slots.add('$startFormatted - $endFormatted');
+      }
+    }
+    return slots;
+  }
 
-void setFilteredMeetingLoader(bool value) {
-  _filteredMeetingLoader = value;
-  notifyListeners();
-}
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
 
-UserMeetingModel? _filteredMeetingData;
-UserMeetingModel? get filteredMeetingData => _filteredMeetingData;
+  // Fetch all meetings and extract booked time slots for today
+  Future<void> fetchAllMeetings() async {
+    if (_loadingMeetings) return;
 
- void filteredMeetingLinkApiTap(BuildContext context) {
-  
+    final isConnected = await ConnectionDetector.connectCheck();
+    if (!isConnected) {
+      showToast("Internet not available", type: toastType.error);
+      return;
+    }
+
+    _loadingMeetings = true;
+    try {
+      await DioClient.allMeeting(
+        onSuccess: (response) {
+          _allMeetingsData = response;
+          _extractBookedTimeSlots();
+          _loadingMeetings = false;
+          notifyListeners();
+        },
+        onError: (error) {
+          AppLogger.error(message: "fetchAllMeetings onError: $error");
+          _loadingMeetings = false;
+          notifyListeners();
+        },
+      );
+    } catch (e) {
+      AppLogger.error(message: "fetchAllMeetings Error: $e");
+      _loadingMeetings = false;
+      notifyListeners();
+    }
+  }
+
+  // Extract booked time slots from all meetings for today
+  void _extractBookedTimeSlots() {
+    _bookedTimeSlots.clear();
+
+    if (_allMeetingsData?.data == null) return;
+
+    final today = DateTime.now();
+
+    for (var meeting in _allMeetingsData!.data!) {
+      if (meeting.dateTime == null) continue;
+
+      try {
+        final meetingDateTime = DateTime.parse(meeting.dateTime!);
+
+        // Check if meeting is today
+        if (meetingDateTime.year == today.year &&
+            meetingDateTime.month == today.month &&
+            meetingDateTime.day == today.day) {
+          // Extract the time slot
+          final meetingTime = TimeOfDay(
+            hour: meetingDateTime.hour,
+            minute: meetingDateTime.minute,
+          );
+
+          // Calculate the 30-minute slot
+          final slotMinute = meetingTime.minute < 30 ? 0 : 30;
+          final startTime = TimeOfDay(
+            hour: meetingTime.hour,
+            minute: slotMinute,
+          );
+          final endTime = slotMinute == 0
+              ? TimeOfDay(hour: meetingTime.hour, minute: 30)
+              : TimeOfDay(hour: meetingTime.hour + 1, minute: 0);
+
+          final startFormatted = _formatTimeOfDay(startTime);
+          final endFormatted = _formatTimeOfDay(endTime);
+          final timeSlot = '$startFormatted - $endFormatted';
+
+          _bookedTimeSlots.add(timeSlot);
+        }
+      } catch (e) {
+        AppLogger.error(message: "Error parsing meeting dateTime: $e");
+      }
+    }
+  }
+
+  Future<void> openMeetNew() async {
+    await openExternalLink("https://meet.google.com/new");
+  }
+
+  Future<void> openMeetLink({required String link}) async {
+    await openExternalLink(link);
+  }
+
+  bool _meetingLoader = false;
+  bool get meetingLoader => _meetingLoader;
+
+  void setMeetingLoader(bool value) {
+    _meetingLoader = value;
+    notifyListeners();
+  }
+
+  void CreateMeetingLinkApiTap(
+    BuildContext context, {
+    required String projectName,
+    required String counsellorEmail,
+    required AssignedMentor projectMentor,
+  }) {
     ConnectionDetector.connectCheck().then((value) {
-      if(value){
+      if (value) {
+        createMeetingLinkApiCall(
+          context,
+          projectName: projectName,
+          counsellorEmail: counsellorEmail,
+          projectMentor: projectMentor,
+        );
+      } else {
+        showToast("Internet not available", type: toastType.error);
+      }
+    });
+  }
+
+  createMeetingLinkApiCall(
+    BuildContext context, {
+    required String projectName,
+    required String counsellorEmail,
+    required AssignedMentor projectMentor,
+  }) async {
+    if (meetingTitleController.text.isEmpty) {
+      showToast("Please enter meeting title", type: toastType.error);
+      return;
+    }
+
+    if (_selectedDateTime == null) {
+      showToast("Please select time slot", type: toastType.error);
+      return;
+    }
+
+    if (meetingLinkController.text.isEmpty) {
+      showToast("Please enter meeting link", type: toastType.error);
+      return;
+    }
+
+    Map<String, dynamic> body = {
+      "title": meetingTitleController.text,
+      "date_time": _selectedDateTime!.toIso8601String(),
+      "meeting_link": meetingLinkController.text,
+      "project_name": projectName,
+      "project_counsellor_email": counsellorEmail,
+      "project_mentor": projectMentor,
+    };
+
+    setMeetingLoader(true);
+    try {
+      DioClient.createMeetingLink(
+        body: body,
+        onSuccess: (response) {
+          if (response["success"] == true) {
+            showToast("Meeting created successfully", type: toastType.success);
+            Navigator.of(context).pop();
+            filteredMeetingLinkApiTap(context);
+            setMeetingLoader(false);
+            notifyListeners();
+          } else {
+            showToast(
+              response["message"] ?? "Failed to create meeting link",
+              type: toastType.error,
+            );
+            setMeetingLoader(false);
+            notifyListeners();
+          }
+        },
+        onError: (error) {
+          AppLogger.error(message: "createMeetingLinkApiCall onError: $error");
+          showToast("Failed to create meeting link", type: toastType.error);
+          setMeetingLoader(false);
+          notifyListeners();
+        },
+      );
+    } catch (e) {
+      AppLogger.error(message: "createMeetingLinkApiCall Error: $e");
+      setMeetingLoader(false);
+      notifyListeners();
+    }
+  }
+
+  //.............filtered Meeting Link...................//
+
+  bool _filteredMeetingLoader = false;
+  bool get filteredMeetingLoader => _filteredMeetingLoader;
+
+  void setFilteredMeetingLoader(bool value) {
+    _filteredMeetingLoader = value;
+    notifyListeners();
+  }
+
+  UserMeetingModel? _filteredMeetingData;
+  UserMeetingModel? get filteredMeetingData => _filteredMeetingData;
+
+  void filteredMeetingLinkApiTap(BuildContext context) {
+    ConnectionDetector.connectCheck().then((value) {
+      if (value) {
         filteredMeetingLinkApiCall(context);
       } else {
         showToast("Intenet not available", type: toastType.error);
@@ -620,25 +792,32 @@ UserMeetingModel? get filteredMeetingData => _filteredMeetingData;
   }
 
   filteredMeetingLinkApiCall(BuildContext context) async {
-    try{
+    try {
       DioClient.filteredMeetingLink(
-      onSuccess: (response) {
-          if(response.success == true) {
+        onSuccess: (response) {
+          if (response.success == true) {
             _filteredMeetingData = response;
             setFilteredMeetingLoader(false);
             notifyListeners();
           } else {
-            showToast(response.message ?? "Failed to fetch meeting links", type: toastType.error);
+            showToast(
+              response.message ?? "Failed to fetch meeting links",
+              type: toastType.error,
+            );
             setFilteredMeetingLoader(false);
             notifyListeners();
           }
-      }, onError: (error) {
-        showToast("Sometings went wrong", type: toastType.error);
-        AppLogger.error(message: "filteredMeetingLinkApiCall onError: $error");
-        setFilteredMeetingLoader(false);
-        notifyListeners();
-      });
-    }catch(e) {
+        },
+        onError: (error) {
+          showToast("Sometings went wrong", type: toastType.error);
+          AppLogger.error(
+            message: "filteredMeetingLinkApiCall onError: $error",
+          );
+          setFilteredMeetingLoader(false);
+          notifyListeners();
+        },
+      );
+    } catch (e) {
       AppLogger.error(message: "filteredMeetingLinkApiCall Error: $e");
       setFilteredMeetingLoader(false);
       notifyListeners();
@@ -674,7 +853,7 @@ UserMeetingModel? get filteredMeetingData => _filteredMeetingData;
         // Web platform - download file via Dio and create blob
         try {
           final dio = Dio();
-          
+
           // Download file as bytes
           final response = await dio.get(
             fileUrl,
@@ -692,19 +871,9 @@ UserMeetingModel? get filteredMeetingData => _filteredMeetingData;
               fileName = 'documentation.pdf';
             }
 
-            // Create blob and download
-            final bytes = response.data;
-            final blob = html.Blob([bytes]);
-            final url = html.Url.createObjectUrlFromBlob(blob);
-            final anchor = html.AnchorElement(href: url)
-              ..setAttribute('download', fileName)
-              ..style.display = 'none';
-            
-            html.document.body?.children.add(anchor);
-            anchor.click();
-            html.document.body?.children.remove(anchor);
-            html.Url.revokeObjectUrl(url);
-            
+            // Download file on web
+            await web_download.downloadFile(response.data, fileName);
+
             setDownloadingFile(false);
             showToast("File downloaded successfully", type: toastType.success);
           } else {
@@ -757,13 +926,18 @@ UserMeetingModel? get filteredMeetingData => _filteredMeetingData;
           filePath,
           onReceiveProgress: (received, total) {
             if (total != -1) {
-              print('Download progress: ${(received / total * 100).toStringAsFixed(0)}%');
+              print(
+                'Download progress: ${(received / total * 100).toStringAsFixed(0)}%',
+              );
             }
           },
         );
 
         setDownloadingFile(false);
-        showToast("File downloaded successfully to Downloads", type: toastType.success);
+        showToast(
+          "File downloaded successfully to Downloads",
+          type: toastType.success,
+        );
       }
     } catch (e) {
       AppLogger.error(message: "downloadFile Error: $e");

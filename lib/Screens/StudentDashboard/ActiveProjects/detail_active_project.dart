@@ -32,7 +32,6 @@ class DetailActiveProject extends StatelessWidget {
   }
 }
 
-
 class _DetailActiveProjectView extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -78,7 +77,10 @@ class _DetailActiveProjectView extends StatelessWidget {
                 if (projectDetails.status?.toLowerCase() == "completed") ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.shade100,
                       borderRadius: BorderRadius.circular(6),
@@ -111,12 +113,16 @@ class _DetailActiveProjectView extends StatelessWidget {
       body: RefreshIndicator(
         onRefresh: () {
           return Future.wait([
-            Future.sync(() => context.read<StudentProfileProvider>().getStudentProfileApiTap(context))
+            Future.sync(
+              () => context
+                  .read<StudentProfileProvider>()
+                  .getStudentProfileApiTap(context),
+            ),
           ]);
         },
         child: SafeArea(
           child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(), 
+            physics: const BouncingScrollPhysics(),
             controller: provider.scrollController,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +141,7 @@ class _DetailActiveProjectView extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                           Text(
+                          Text(
                             'Overview',
                             style: TextStyle(
                               fontSize: 22,
@@ -144,14 +150,20 @@ class _DetailActiveProjectView extends StatelessWidget {
                           ),
                           TextButton(
                             onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => CreateTicketScreen(projectDetails: projectDetails)));
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => CreateTicketScreen(
+                                    projectDetails: projectDetails,
+                                  ),
+                                ),
+                              );
                             },
                             child: Text("Create Ticket"),
-                          )
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
-        
+
                       // Overview card / panel
                       Container(
                         width: double.infinity,
@@ -174,11 +186,15 @@ class _DetailActiveProjectView extends StatelessWidget {
                           final totalMilestones = milestones.length;
                           final completedMilestones = milestones.where((m) {
                             final status = m.status?.toLowerCase();
-                            return status == 'approved' || status == 'completed';
+                            return status == 'approved' ||
+                                status == 'completed';
                           }).length;
-                          final pendingMilestones = totalMilestones - completedMilestones;
-                          final progressPercentage = totalMilestones > 0  ? completedMilestones / totalMilestones  : 0.0;
-        
+                          final pendingMilestones =
+                              totalMilestones - completedMilestones;
+                          final progressPercentage = totalMilestones > 0
+                              ? completedMilestones / totalMilestones
+                              : 0.0;
+
                           return Container(
                             height: 100,
                             width: double.infinity,
@@ -191,7 +207,8 @@ class _DetailActiveProjectView extends StatelessWidget {
                               child: Column(
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         "Overall progress",
@@ -199,7 +216,9 @@ class _DetailActiveProjectView extends StatelessWidget {
                                       ),
                                       Text(
                                         "$completedMilestones/$totalMilestones Tasks",
-                                        style: textStyle(color: AppColors.lightGrey2),
+                                        style: textStyle(
+                                          color: AppColors.lightGrey2,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -215,15 +234,20 @@ class _DetailActiveProjectView extends StatelessWidget {
                                   ),
                                   hSpace(height: 10),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         "${(progressPercentage * 100).toStringAsFixed(0)}% completed",
-                                        style: textStyle(color: AppColors.lightGrey2),
+                                        style: textStyle(
+                                          color: AppColors.lightGrey2,
+                                        ),
                                       ),
                                       Text(
                                         "$pendingMilestones pending",
-                                        style: textStyle(color: AppColors.lightGrey2),
+                                        style: textStyle(
+                                          color: AppColors.lightGrey2,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -236,8 +260,7 @@ class _DetailActiveProjectView extends StatelessWidget {
                     ],
                   ),
                 ),
-        
-        
+
                 // Tabs Section
                 Container(
                   height: 48,
@@ -261,7 +284,9 @@ class _DetailActiveProjectView extends StatelessWidget {
                           decoration: BoxDecoration(
                             border: Border(
                               bottom: BorderSide(
-                                color: isSelected ? Colors.black : Colors.transparent,
+                                color: isSelected
+                                    ? Colors.black
+                                    : Colors.transparent,
                                 width: 2,
                               ),
                             ),
@@ -283,7 +308,7 @@ class _DetailActiveProjectView extends StatelessWidget {
                     },
                   ),
                 ),
-        
+
                 // Content Sections with padding
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -296,182 +321,220 @@ class _DetailActiveProjectView extends StatelessWidget {
                       // Tasks Section
                       _buildSectionWithKey(
                         key: provider.tasksKey,
-                        child: _TasksSection(provider: provider, projectDetails: projectDetails),
+                        child: _TasksSection(
+                          provider: provider,
+                          projectDetails: projectDetails,
+                        ),
                       ),
-        
+
                       // const SizedBox(height: 30),
-        
+
                       // // Deliverables Section
                       // _buildSectionWithKey(
                       //   key: provider.deliverablesKey,
                       //   child: _DeliverablesSection(provider: provider),
                       // ),
                       // const SizedBox(height: 30),
-        
+
                       // // Resources Section
                       // _buildSectionWithKey(
                       //   key: provider.resourcesKey,
                       //   child: _ResourcesSection(provider: provider),
                       // ),
-        
-        
                       Row(
                         children: [
-                          Text("Documentations", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),),
-                        ],
-                      ),
-        
-                      // Documentations list with simple PDF download UI (mock download)
-                      Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey.shade300),
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.grey.shade50,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue.shade50,
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Icon(Icons.picture_as_pdf, color: Colors.red, size: 26),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Project Documentation',
-                                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        ElevatedButton.icon(
-                                          onPressed: provider.downloadingFile
-                                              ? null
-                                              : () {
-                                                  provider.downloadFile(context, "${Apis.baseUrl}${projectDetails.attachedFiles}");
-                                                },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.black,
-                                            disabledBackgroundColor: Colors.grey,
-                                          ),
-                                          icon: provider.downloadingFile
-                                              ? const SizedBox(
-                                                  width: 18,
-                                                  height: 18,
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                                  ),
-                                                )
-                                              : const Icon(Icons.download_rounded, size: 18, color: Colors.white),
-                                          label: Text(
-                                            provider.downloadingFile ? 'Downloading...' : 'Download',
-                                            style: const TextStyle(color: Colors.white),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                      // const SizedBox(height: 30),
-        
-                      // Feedbacks Section
-                      // _buildSectionWithKey(
-                      //   key: provider.feedbacksKey,
-                      //   child: _FeedbacksSection(provider: provider),
-                      // ),
-        
-                      const SizedBox(height: 20),
-        
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => ChatListScreen(projectId: projectDetails.projectId!)),
-                      );
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFF667EEA).withValues(alpha: 0.4),
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
+                          Text(
+                            "Documentations",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ],
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(18.0),
+
+                      // Documentations list with simple PDF download UI (mock download)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.grey.shade50,
+                        ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Center(
-                                    child: Text('💬', style: TextStyle(fontSize: 24)),
-                                  ),
-                                ),
-                                SizedBox(width: 14),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Messages",
-                                      style: textStyle(
-                                        fontFamily: AppFonts.interBold,
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    Text(
-                                      "Chat with mentors & counsellors",
-                                      style: textStyle(
-                                        fontSize: 12,
-                                        color: Colors.white.withValues(alpha: 0.9),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
                             Container(
-                              width: 36,
-                              height: 36,
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Icon(
-                                Icons.arrow_forward_rounded,
-                                color: Colors.white,
-                                size: 20,
+                              child: const Icon(
+                                Icons.picture_as_pdf,
+                                color: Colors.red,
+                                size: 26,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Project Documentation',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton.icon(
+                              onPressed: provider.downloadingFile
+                                  ? null
+                                  : () {
+                                      provider.downloadFile(
+                                        context,
+                                        "${Apis.baseUrl}${projectDetails.attachedFiles}",
+                                      );
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                disabledBackgroundColor: Colors.grey,
+                              ),
+                              icon: provider.downloadingFile
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.download_rounded,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                              label: Text(
+                                provider.downloadingFile
+                                    ? 'Downloading...'
+                                    : 'Download',
+                                style: const TextStyle(color: Colors.white),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ),
+
+                      // const SizedBox(height: 30),
+
+                      // Feedbacks Section
+                      // _buildSectionWithKey(
+                      //   key: provider.feedbacksKey,
+                      //   child: _FeedbacksSection(provider: provider),
+                      // ),
+                      const SizedBox(height: 20),
+
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ChatListScreen(
+                                projectId: projectDetails.projectId!,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFF667EEA).withValues(alpha: 0.4),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(18.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '💬',
+                                          style: TextStyle(fontSize: 24),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 14),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Messages",
+                                          style: textStyle(
+                                            fontFamily: AppFonts.interBold,
+                                            fontSize: 18,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Chat with mentors & counsellors",
+                                          style: textStyle(
+                                            fontSize: 12,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.9,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.arrow_forward_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -548,12 +611,13 @@ class _TasksSection extends StatelessWidget {
           itemBuilder: (context, index) {
             final milestones = projectDetails.milestones![index];
             final taskIndex = index;
-            
+
             final bool isLocallySubmitted = provider.isTaskSubmitted(taskIndex);
             final String? milestoneStatus = milestones.status?.toLowerCase();
-            final bool apiMarkedCompleted = milestoneStatus == "completed" || 
-                                           milestoneStatus == "approved" || 
-                                           milestoneStatus == "rejected";
+            final bool apiMarkedCompleted =
+                milestoneStatus == "completed" ||
+                milestoneStatus == "approved" ||
+                milestoneStatus == "rejected";
             final bool isSubmitted = isLocallySubmitted || apiMarkedCompleted;
             final bool hasFile = provider.taskFiles.containsKey(taskIndex);
             final bool isCompleted = hasFile || isSubmitted;
@@ -570,7 +634,9 @@ class _TasksSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   InkWell(
-                    onTap: isCompleted ? null : () async {
+                    onTap: isCompleted
+                        ? null
+                        : () async {
                             await provider.pickFileForTask(taskIndex);
                           },
                     borderRadius: BorderRadius.circular(8),
@@ -583,14 +649,22 @@ class _TasksSection extends StatelessWidget {
                           margin: const EdgeInsets.only(top: 2, right: 12),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: isCompleted ? Colors.black : Colors.transparent,
+                            color: isCompleted
+                                ? Colors.black
+                                : Colors.transparent,
                             border: Border.all(
-                              color: isCompleted ? Colors.black : Colors.grey.shade400,
+                              color: isCompleted
+                                  ? Colors.black
+                                  : Colors.grey.shade400,
                               width: 2,
                             ),
                           ),
                           child: isCompleted
-                              ? const Icon(Icons.check, size: 12, color: Colors.white)
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 12,
+                                  color: Colors.white,
+                                )
                               : null,
                         ),
                         Expanded(
@@ -603,12 +677,16 @@ class _TasksSection extends StatelessWidget {
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black,
-                                  decoration: isCompleted ? TextDecoration.lineThrough : null,
+                                  decoration: isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                milestones.dueDate == null ? "Due Date: -" : "Due Date: ${DateFormat("dd/MMMM/yyyy").format(milestones.dueDate!)}",
+                                milestones.dueDate == null
+                                    ? "Due Date: -"
+                                    : "Due Date: ${DateFormat("dd/MMMM/yyyy").format(milestones.dueDate!)}",
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey.shade600,
@@ -634,7 +712,9 @@ class _TasksSection extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     color: Colors.green.shade50,
                                     borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: Colors.green.shade200),
+                                    border: Border.all(
+                                      color: Colors.green.shade200,
+                                    ),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -677,7 +757,7 @@ class _TasksSection extends StatelessWidget {
                               //     ),
                               //   ),
                               // ],
-                               if (!hasFile) ...[
+                              if (!hasFile) ...[
                                 const SizedBox(height: 8),
                                 Text(
                                   'Tap to upload file and mark complete',
@@ -701,19 +781,21 @@ class _TasksSection extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: provider.isCompletingTask(milestones.id ?? '') 
-                          ? null 
-                          : () {
-                              if (projectDetails.projectId != null && milestones.id != null) {
-                                provider.completeTaskApiTap(
-                                  context,
-                                  projectDetails.projectId!,
-                                  milestones.id!,
-                                  taskIndex,
-                                  provider.taskFiles[taskIndex],
-                                );
-                              }
-                            },
+                        onPressed:
+                            provider.isCompletingTask(milestones.id ?? '')
+                            ? null
+                            : () {
+                                if (projectDetails.projectId != null &&
+                                    milestones.id != null) {
+                                  provider.completeTaskApiTap(
+                                    context,
+                                    projectDetails.projectId!,
+                                    milestones.id!,
+                                    taskIndex,
+                                    provider.taskFiles[taskIndex],
+                                  );
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -722,22 +804,24 @@ class _TasksSection extends StatelessWidget {
                           ),
                         ),
                         child: provider.isCompletingTask(milestones.id ?? '')
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Text(
+                                'Submit for Approval',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            )
-                          : const Text(
-                              'Submit for Approval',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
                       ),
                     ),
                   ],
@@ -751,7 +835,10 @@ class _TasksSection extends StatelessWidget {
                         if (milestones.status?.toLowerCase() == "approved") ...[
                           // Show approved status
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.blue.shade50,
                               borderRadius: BorderRadius.circular(8),
@@ -777,10 +864,14 @@ class _TasksSection extends StatelessWidget {
                               ],
                             ),
                           ),
-                        ] else if (milestones.status?.toLowerCase() == "rejected") ...[
+                        ] else if (milestones.status?.toLowerCase() ==
+                            "rejected") ...[
                           // Show rejected status
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red.shade50,
                               borderRadius: BorderRadius.circular(8),
@@ -809,7 +900,10 @@ class _TasksSection extends StatelessWidget {
                         ] else ...[
                           // Default - Show pending approval
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.orange.shade50,
                               borderRadius: BorderRadius.circular(8),
@@ -839,138 +933,298 @@ class _TasksSection extends StatelessWidget {
                         hSpace(height: 8),
                         InkWell(
                           onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return StatefulBuilder(
-                                  builder: (context, setState) => AlertDialog(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                    titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    title: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text('Create Meeting', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-                                        const SizedBox(height: 6),
-                                        Text('Add meeting details for reviewer', style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-                                      ],
-                                    ),
-                                    content: Consumer<DetailProjectProvider>(builder: (context, pvd, child) {
-                                      return SingleChildScrollView(
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
+                            // Fetch all meetings before opening dialog
+                            context.read<DetailProjectProvider>().fetchAllMeetings().then((
+                              _,
+                            ) {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return StatefulBuilder(
+                                    builder: (context, setState) => AlertDialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      titlePadding: const EdgeInsets.fromLTRB(
+                                        20,
+                                        20,
+                                        20,
+                                        0,
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 12,
+                                          ),
+                                      title: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          TextField(
-                                            controller: pvd.meetingTitleController,
-                                            decoration: InputDecoration(
-                                              labelText: 'Meeting Title',
-                                              filled: true,
-                                              fillColor: Colors.grey.shade50,
-                                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                                          const Text(
+                                            'Create Meeting',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 18,
                                             ),
                                           ),
-                                          const SizedBox(height: 12),
-                                          InkWell(
-                                            onTap: () async {
-                                              final date = await showDatePicker(
-                                                context: context,
-                                                initialDate: DateTime.now(),
-                                                firstDate: DateTime.now().subtract(const Duration(days: 1)),
-                                                lastDate: DateTime.now().add(const Duration(days: 365)),
-                                              );
-                                              if (date == null) return;
-                                              final time = await showTimePicker(
-                                                context: context,
-                                                initialTime: TimeOfDay.now(),
-                                              );
-                                              if (time == null) return;
-                                              pvd.setSelectedDateTime(DateTime(date.year, date.month, date.day, time.hour, time.minute));
-                                            },
-                                            borderRadius: BorderRadius.circular(10),
-                                            child: Container(
-                                              width: double.infinity,
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey.shade50,
-                                                borderRadius: BorderRadius.circular(10),
-                                                border: Border.all(color: Colors.grey.shade200),
-                                              ),
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  if (pvd.selectedDateTime == null)
-                                                    Text('Select Date & Time', style: TextStyle(color: Colors.grey[600]))
-                                                  else
-                                                    Text(
-                                                      DateFormat('dd MMM, yyyy • hh:mm a').format(pvd.selectedDateTime!),
-                                                      style: const TextStyle(fontWeight: FontWeight.w600),
-                                                    ),
-                                                  const Icon(Icons.calendar_today, size: 18, color: Colors.black54),
-                                                ],
-                                              ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            'Add meeting details for reviewer',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey[600],
                                             ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          TextField(
-                                            controller: pvd.meetingLinkController,
-                                            keyboardType: TextInputType.url,
-                                            decoration: InputDecoration(
-                                              labelText: 'Meeting Link',
-                                              hintText: 'https://example.com/meet/xyz',
-                                              filled: true,
-                                              hintStyle: TextStyle(color: Colors.grey[400]),
-                                              fillColor: Colors.grey.shade50,
-                                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                                            ),
-                                          ),
-                                          TextButton(
-                                          onPressed: (){
-                                            pvd.openMeetNew();
-                                          }, child: Text("Generate Link and paste here")),
-                                          Row(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text("Note:- ", style: TextStyle(fontWeight: FontWeight.w600, color: Colors.red)),
-                                              SizedBox(
-                                                width: 180,
-                                                child: Text("This meeting will be shared with Project Mentor and Counsellor.", overflow: TextOverflow.clip)),
-                                            ],
                                           ),
                                         ],
                                       ),
-                                    );
-                                    }),
-                                    actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: const Text('Cancel'),
-                                      ),
-                                      CustomButton(
-                                        isLoading: context.watch<DetailProjectProvider>().meetingLoader,
-                                        height: 45,
-                                        width: 150,
-                                        title: "Create",
-                                        onTap: () {
-                                          context.read<DetailProjectProvider>().CreateMeetingLinkApiTap(
-                                            context, 
-                                            projectName: projectDetails.title!, 
-                                            counsellorEmail: projectDetails.createdByEmail!, 
-                                            projectMentor: projectDetails.assignedMentor!
+                                      content: Consumer<DetailProjectProvider>(
+                                        builder: (context, pvd, child) {
+                                          return SingleChildScrollView(
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                TextField(
+                                                  controller: pvd
+                                                      .meetingTitleController,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Meeting Title',
+                                                    filled: true,
+                                                    fillColor:
+                                                        Colors.grey.shade50,
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                      borderSide:
+                                                          BorderSide.none,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 4,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey.shade50,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
+                                                    border: Border.all(
+                                                      color:
+                                                          Colors.grey.shade200,
+                                                    ),
+                                                  ),
+                                                  child: DropdownButtonHideUnderline(
+                                                    child: DropdownButton<String>(
+                                                      isExpanded: true,
+                                                      hint: Text(
+                                                        'Select Time Slot (30 min)',
+                                                        style: TextStyle(
+                                                          color:
+                                                              Colors.grey[600],
+                                                        ),
+                                                      ),
+                                                      value:
+                                                          pvd.selectedTimeSlot,
+                                                      icon: const Icon(
+                                                        Icons.access_time,
+                                                        size: 18,
+                                                        color: Colors.black54,
+                                                      ),
+                                                      items: pvd.generateTimeSlots().map((
+                                                        String slot,
+                                                      ) {
+                                                        final isBooked = pvd
+                                                            .bookedTimeSlots
+                                                            .contains(slot);
+                                                        return DropdownMenuItem<
+                                                          String
+                                                        >(
+                                                          value: slot,
+                                                          enabled: !isBooked,
+                                                          child: Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                slot,
+                                                                style: TextStyle(
+                                                                  fontSize: 14,
+                                                                  color:
+                                                                      isBooked
+                                                                      ? Colors
+                                                                            .grey
+                                                                            .shade400
+                                                                      : Colors
+                                                                            .black,
+                                                                ),
+                                                              ),
+                                                              if (isBooked)
+                                                                Container(
+                                                                  padding:
+                                                                      const EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            6,
+                                                                        vertical:
+                                                                            2,
+                                                                      ),
+                                                                  decoration: BoxDecoration(
+                                                                    color: Colors
+                                                                        .red
+                                                                        .shade100,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          4,
+                                                                        ),
+                                                                  ),
+                                                                  child: Text(
+                                                                    'Booked',
+                                                                    style: TextStyle(
+                                                                      fontSize:
+                                                                          10,
+                                                                      color: Colors
+                                                                          .red
+                                                                          .shade700,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w600,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                      }).toList(),
+                                                      onChanged: (String? newValue) {
+                                                        if (newValue != null &&
+                                                            !pvd.bookedTimeSlots
+                                                                .contains(
+                                                                  newValue,
+                                                                )) {
+                                                          pvd.setSelectedTimeSlot(
+                                                            newValue,
+                                                          );
+                                                        }
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                TextField(
+                                                  controller:
+                                                      pvd.meetingLinkController,
+                                                  keyboardType:
+                                                      TextInputType.url,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Meeting Link',
+                                                    hintText:
+                                                        'https://example.com/meet/xyz',
+                                                    filled: true,
+                                                    hintStyle: TextStyle(
+                                                      color: Colors.grey[400],
+                                                    ),
+                                                    fillColor:
+                                                        Colors.grey.shade50,
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                      borderSide:
+                                                          BorderSide.none,
+                                                    ),
+                                                  ),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    pvd.openMeetNew();
+                                                  },
+                                                  child: Text(
+                                                    "Generate Link and paste here",
+                                                  ),
+                                                ),
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      "Note:- ",
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 180,
+                                                      child: Text(
+                                                        "This meeting will be shared with Project Mentor and Counsellor.",
+                                                        overflow:
+                                                            TextOverflow.clip,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
                                           );
                                         },
                                       ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            );
+                                      actionsPadding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        0,
+                                        16,
+                                        12,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text('Cancel'),
+                                        ),
+                                        CustomButton(
+                                          isLoading: context
+                                              .watch<DetailProjectProvider>()
+                                              .meetingLoader,
+                                          height: 45,
+                                          width: 150,
+                                          title: "Create",
+                                          onTap: () {
+                                            context
+                                                .read<DetailProjectProvider>()
+                                                .CreateMeetingLinkApiTap(
+                                                  context,
+                                                  projectName:
+                                                      projectDetails.title!,
+                                                  counsellorEmail:
+                                                      projectDetails
+                                                          .createdByEmail!,
+                                                  projectMentor: projectDetails
+                                                      .assignedMentor!,
+                                                );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            });
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.blue.shade50,
                               borderRadius: BorderRadius.circular(8),
@@ -1004,7 +1258,7 @@ class _TasksSection extends StatelessWidget {
               ),
             );
           },
-        )
+        ),
       ],
     );
   }
