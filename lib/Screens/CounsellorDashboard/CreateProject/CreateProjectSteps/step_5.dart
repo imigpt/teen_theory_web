@@ -196,6 +196,57 @@ class Step5 extends StatelessWidget {
               style: textStyle(fontFamily: AppFonts.interBold, fontSize: 16),
             ),
             hSpace(height: 12),
+            
+            // Show existing file if available
+            if (pvd.existingAttachedFile != null && pvd.existingAttachedFile!.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  border: Border.all(color: Colors.green.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green.shade700),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Existing File Attached",
+                            style: textStyle(
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 14,
+                              color: Colors.green.shade900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            pvd.existingAttachedFile!.split('/').last,
+                            style: textStyle(
+                              fontSize: 12,
+                              color: Colors.green.shade700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.red.shade700),
+                      onPressed: () {
+                        pvd.setExistingAttachedFile(null);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              hSpace(height: 12),
+            ],
+            
             CustomPaint(
               painter: DashedBorderPainter(
                 color: Colors.grey.shade400,

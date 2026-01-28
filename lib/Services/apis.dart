@@ -3,11 +3,15 @@ class Apis {
 
   // APIs Endpoints
   static const String login = "$baseUrl/users/user_login";
+  static const String forgotPassword = "$baseUrl/users/request_password_change";
+  static const String passwordChangeRequests = "$baseUrl/users/password_change_requests";
+  static const String changePassword = "$baseUrl/users/change_password";
   static const String profile = "$baseUrl/users/me";
   static const String updateProfile = "$baseUrl/users/update";
   static const String createProject = "$baseUrl/projects/create";
   static const String allStudents = "$baseUrl/users/all_students";
   static const String allMentors = "$baseUrl/users/all_mentors";
+  static const String allParents = "$baseUrl/users/all_parents";
   static const String myProjects = "$baseUrl/projects/my_projects";
   static const String createTicket = "$baseUrl/tickets/create";
   static const String completedTaskApi = "$baseUrl/projects/milestone_status";
@@ -27,8 +31,13 @@ class Apis {
   static const String conversionIdApi = "$baseUrl/chat/conversation";
   static const String ticketStatusApi = "$baseUrl/tickets/update_status";
   static const String counsellorMeetingApi = "$baseUrl/meetings/counsellor_meetings";
+  static const String counsellorCreateMeetingApi = "$baseUrl/meetings/counsellor_create_meeting";
+  static const String createNewMeetingApi = "$baseUrl/meetings/create_new_meeting";
+  static const String getNewMeetingsApi = "$baseUrl/meetings/get_new_meetings";
+  static const String myParticipantMeetingsApi = "$baseUrl/meetings/my_participant_meetings";
   static const String allCounsellorApi = "$baseUrl/users/all_counsellors";
   static const String requestMeetingApi = "$baseUrl/meetings/request";
   static const String getrequestMeetingByTokenApi = "$baseUrl/meetings/requests/mine";
   static const String deleteProjectApi = "$baseUrl/projects";
+  static const String updateProjectApi = "$baseUrl/projects/update";
 }

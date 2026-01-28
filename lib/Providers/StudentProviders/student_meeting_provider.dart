@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teen_theory/Models/CommonModels/multi_participatemeeting_model.dart' as multi_participatemeeting_model;
 import 'package:teen_theory/Models/CommonModels/profile_model.dart';
 import 'package:teen_theory/Models/StudentModels/student_meeting_model.dart';
 import 'package:teen_theory/Services/dio_client.dart';
@@ -16,12 +17,23 @@ class StudentMeetingProvider extends ChangeNotifier {
   String? _errorMessage;
   String? _studentEmail;
 
+  // Participant Meetings State
+  multi_participatemeeting_model.ParticipateMeetingModel? _participantMeetingsData;
+  bool _participantMeetingsLoading = false;
+  String? _participantMeetingsError;
+
   List<Datum> get upcomingMeetings => List.unmodifiable(_upcomingMeetings);
   List<Datum> get pastMeetings => List.unmodifiable(_pastMeetings);
   bool get isLoading => _isLoading;
   bool get hasFetched => _hasFetched;
   String? get errorMessage => _errorMessage;
   bool get hasData => _upcomingMeetings.isNotEmpty || _pastMeetings.isNotEmpty;
+
+  // Participant Meetings Getters
+  multi_participatemeeting_model.ParticipateMeetingModel? get participantMeetingsData => _participantMeetingsData;
+  bool get participantMeetingsLoading => _participantMeetingsLoading;
+  String? get participantMeetingsError => _participantMeetingsError;
+  List<multi_participatemeeting_model.Datum> get participantMeetings => _participantMeetingsData?.data ?? [];
 
   Future<void> fetchMeetings({bool forceRefresh = false}) async {
     if (_isLoading) return;
@@ -137,6 +149,36 @@ class StudentMeetingProvider extends ChangeNotifier {
       return null;
     }
   }
+
+  // Fetch Participant Meetings
+  Future<void> fetchParticipantMeetings({bool forceRefresh = false}) async {
+    if (_participantMeetingsLoading) return;
+
+    _participantMeetingsLoading = true;
+    _participantMeetingsError = null;
+    notifyListeners();
+
+    try {
+      multi_participatemeeting_model.ParticipateMeetingModel? apiResponse;
+      String? apiError;
+
+      await DioClient.getMyParticipantMeetings(
+        onSuccess: (response) => apiResponse = response,
+        onError: (error) => apiError = error,
+      );
+
+      if (apiError != null) throw Exception(apiError);
+      _participantMeetingsData = apiResponse;
+    } catch (e, stack) {
+      _participantMeetingsError = e.toString();
+      AppLogger.error(message: 'StudentMeetingProvider fetchParticipantMeetings error: $e\n$stack');
+    } finally {
+      _participantMeetingsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refreshParticipantMeetings() => fetchParticipantMeetings(forceRefresh: true);
 
   void requestMeeting() {
    requestMeetingApiTap();

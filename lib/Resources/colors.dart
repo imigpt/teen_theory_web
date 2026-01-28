@@ -9,7 +9,9 @@ class AppColors {
   static Color yellow100 = Colors.yellow.shade100;
   static const Color lightGrey3 = Color(0XFFF2F2F2);
   static const Color blue = Color(0XFF1248A6);
+  static const Color primaryColor = Color(0XFF1248A6); // Same as blue
   static const Color orange = Color(0XFFE33629);
+  static const Color grey = Color(0XFF9E9E9E);
   static const Color shimmerBaseColor = Color(0XFFE0E0E0);
   static const Color shimmerHighlightColor = Color(0XFFF5F5F5);
 }

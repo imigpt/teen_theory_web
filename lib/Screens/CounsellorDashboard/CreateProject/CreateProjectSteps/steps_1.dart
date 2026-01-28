@@ -19,6 +19,40 @@ class Steps1 extends StatefulWidget {
 
 class _Steps1State extends State<Steps1> {
   String? _selectedProjectType;
+
+  @override
+  void initState() {
+    super.initState();
+    // Map the selectedTemplate to internal value
+    _selectedProjectType = _mapProjectTypeToValue(widget.selectedTemplate);
+  }
+
+  @override
+  void didUpdateWidget(Steps1 oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update local state when widget updates
+    if (oldWidget.selectedTemplate != widget.selectedTemplate) {
+      _selectedProjectType = _mapProjectTypeToValue(widget.selectedTemplate);
+    }
+  }
+
+  String _mapProjectTypeToValue(String projectType) {
+    switch (projectType.toLowerCase()) {
+      case 'sda project':
+        return 'sda';
+      case 'custom project':
+        return 'custom';
+      case 'college application':
+        return 'college';
+      default:
+        // If already in short form, return as is
+        if (['sda', 'custom', 'college'].contains(projectType.toLowerCase())) {
+          return projectType.toLowerCase();
+        }
+        return 'sda'; // default
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(

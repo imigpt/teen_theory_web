@@ -10,6 +10,7 @@ import 'package:teen_theory/Models/CommonModels/all_student_model.dart' as stude
 import 'package:teen_theory/Models/CommonModels/filter_requestmeeting_model.dart';
 import 'package:teen_theory/Models/CounsellorModels/all_my_project_model.dart';
 import 'package:teen_theory/Models/CounsellorModels/counsellor_meeting_model.dart';
+import 'package:teen_theory/Models/CounsellorModels/multi_user_meeting_model.dart';
 import 'package:teen_theory/Screens/CounsellorDashboard/CreateProject/create_project_main.dart' as create_project;
 import 'package:teen_theory/Services/dio_client.dart';
 import 'package:teen_theory/Utils/app_logger.dart';
@@ -31,6 +32,19 @@ class CounsellorProvider with ChangeNotifier {
 
   void setLoading(bool value) {
     _isLoading = value;
+    notifyListeners();
+  }
+
+  // ==================== EDIT MODE PROPERTIES ====================
+  bool _isEditMode = false;
+  bool get isEditMode => _isEditMode;
+
+  int? _editingProjectId;
+  int? get editingProjectId => _editingProjectId;
+
+  void setEditMode(bool value, {int? projectId}) {
+    _isEditMode = value;
+    _editingProjectId = projectId;
     notifyListeners();
   }
 
@@ -486,6 +500,13 @@ class CounsellorProvider with ChangeNotifier {
   FilePickerResult? _pickedFiles;
   FilePickerResult? get pickedFiles => _pickedFiles;
 
+  String? _existingAttachedFile;
+  String? get existingAttachedFile => _existingAttachedFile;
+
+  void setExistingAttachedFile(String? file) {
+    _existingAttachedFile = file;
+    notifyListeners();
+  }
 
   Future pickedFileFromDevice () async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -820,7 +841,208 @@ class CounsellorProvider with ChangeNotifier {
     resources.clear();
     sessionPurposeController.clear();
     _pickedFiles = null;
+    _isEditMode = false;
+    _editingProjectId = null;
     notifyListeners();
+  }
+
+  // ==================== POPULATE PROJECT FOR EDIT ====================
+  void populateProjectForEdit(MyProject project) {
+    // Don't call clearCreateProjectData() as it resets values we're about to set
+    // Reset step to 1
+    _currentStep = 1;
+    
+    _isEditMode = true;
+    _editingProjectId = project.id;
+    
+    // Step 1 - Basic Info
+    projectTitleController.text = project.title ?? "";
+    descriptionController.text = project.projectDescription ?? "";
+    _selectedProjectType = project.projectType ?? "SDA Project";
+    
+    // Step 2 - Assigned People
+    assignedStudents.clear();
+    if (project.assignedStudent != null && project.assignedStudent!.isNotEmpty) {
+      assignedStudents = project.assignedStudent!.map((student) => {
+        'id': student.id ?? '',
+        'name': student.name ?? '',
+        'grade': student.grade ?? '',
+      }).toList();
+    }
+    
+    assignedMentor = null;
+    if (project.assignedMentor != null) {
+      assignedMentor = {
+        'id': project.assignedMentor!.id ?? '',
+        'name': project.assignedMentor!.name ?? '',
+        'email': project.assignedMentor!.email ?? '',
+        'subtitle': project.assignedMentor!.subtitle ?? '',
+        'rating': project.assignedMentor!.rating ?? '',
+        'reviews': project.assignedMentor!.reviews ?? '',
+      };
+    }
+    
+    // Step 3 - Milestones
+    milestones.clear();
+    if (project.milestones != null && project.milestones!.isNotEmpty) {
+      for (var m in project.milestones!) {
+        List<create_project.Task> taskList = [];
+        if (m.tasks != null) {
+          for (var t in m.tasks!) {
+            taskList.add(create_project.Task(
+              title: t.title ?? "",
+              type: t.type?.toString(),
+              dueDate: t.dueDate != null ? DateTime.tryParse(t.dueDate.toString()) : null,
+              priority: t.priority?.toString(),
+            ));
+          }
+        }
+        milestones.add(create_project.Milestone(
+          name: m.name ?? "",
+          dueDate: m.dueDate,
+          weight: m.weight ?? "",
+          tasks: taskList,
+        ));
+      }
+    }
+    
+    // Step 4 - Deliverables
+    deliverableTitleController.text = project.deliverablesTitle ?? "";
+    _selectedDeliverableTypes = project.deliverablesType ?? [];
+    _selectedDueDate = project.dueDate;
+    _selectedLinkedMilestone = project.linkedMilestones;
+    _selectedFileNamingConvention = project.metadataAndReq;
+    _selectedWordLimit = project.pageLimit;
+    additionalInstructionsController.text = project.additionalInstructions ?? "";
+    _allowMultipleSubmissions = project.allowMultipleSubmissions ?? true;
+    _requiresMentorApproval = project.montorApproval ?? false;
+    _requiresCounsellorApproval = project.counsellorApproval ?? false;
+    
+    // Step 5 - Resources
+    resourceTitleController.text = project.resourcesTitle ?? "";
+    resourceDescriptionController.text = project.resourcesDescription ?? "";
+    _selectedResourceType = project.resourcesType;
+    _visibleToStudent = project.studentVisibility ?? true;
+    _visibleToMentor = project.mentorVisibility ?? true;
+    _existingAttachedFile = project.attachedFiles;
+    _pickedFiles = null; // Reset picked files when editing
+    
+    // Step 6 - Session Details
+    _selectedSessionType = project.sessionType;
+    sessionPurposeController.text = project.purpose ?? "";
+    _preferredTiming = project.preferredTime;
+    _selectedDuration = project.duration;
+    
+    notifyListeners();
+  }
+
+  // ==================== UPDATE PROJECT API ====================
+  void updateProjectApiTap(BuildContext context, {String? counsellorEmail}) {
+    ConnectionDetector.connectCheck().then((value) {
+      if (value) {
+        updateProjectApiCall(context, counsellorEmail: counsellorEmail);
+      } else {
+        showToast("Please check your internet", type: toastType.error);
+      }
+    });
+  }
+
+  Future<void> updateProjectApiCall(BuildContext context, {String? counsellorEmail}) async {
+    if (_editingProjectId == null) {
+      showToast("Project ID not found", type: toastType.error);
+      return;
+    }
+
+    MultipartFile? _attachedFiles;
+
+    if (_pickedFiles != null && _pickedFiles!.files.isNotEmpty) {
+      final file = _pickedFiles!.files.first;
+      if (kIsWeb) {
+        _attachedFiles = MultipartFile.fromBytes(
+          file.bytes!,
+          filename: file.name,
+        );
+      } else {
+        _attachedFiles = await MultipartFile.fromFile(
+          file.path!,
+          filename: file.name,
+        );
+      }
+    }
+    
+    setBtnLoading(true);
+    try {
+      setCreating(true);
+
+      // Prepare FormData
+      Map<String, dynamic> formMap = {
+        "project_id": _editingProjectId,
+        "title": projectTitleController.text,
+        "project_type": _selectedProjectType,
+        "project_description": descriptionController.text,
+        "project_counsellor": counsellorEmail ?? "",
+        "milestones": jsonEncode(milestones),
+        "session_type": _selectedSessionType ?? "",
+        "purpose": sessionPurposeController.text,
+        "preferred_time": _preferredTiming ?? "",
+        "duration": _selectedDuration ?? "",
+        "allow_multiple_submissions": _allowMultipleSubmissions,
+        "montor_approval": _requiresMentorApproval,
+        "counsellor_approval": _requiresCounsellorApproval,
+        "student_visibility": _visibleToStudent,
+        "mentor_visibility": _visibleToMentor,
+        "assigned_student": assignedStudents.isNotEmpty ? jsonEncode(assignedStudents) : "",
+        "assigned_mentor": assignedMentor != null ? jsonEncode(assignedMentor) : "",
+        "deliverables_title": deliverableTitleController.text,
+        "deliverables_type": _selectedDeliverableTypes,
+        "due_date": _selectedDueDate?.toIso8601String(),
+        "linked_milestones": _selectedLinkedMilestone,
+        "metadata_and_req": _selectedFileNamingConvention,
+        "page_limit": _selectedWordLimit,
+        "additional_instructions": additionalInstructionsController.text,
+        "resources_type": _selectedResourceType,
+        "resources_title": resourceTitleController.text,
+        "resources_description": resourceDescriptionController.text,
+      };
+
+      // Only add attached_files if a new file is picked
+      if (_attachedFiles != null) {
+        formMap["attached_files"] = _attachedFiles;
+      }
+
+      FormData body = FormData.fromMap(formMap);
+
+      AppLogger.debug(message: "Update Project FormData: ${body.fields}");
+
+      await DioClient.updateProject(
+        body: body,
+        onSuccess: (response) {
+          setCreating(false);
+          showToast("Project updated successfully!", type: toastType.success);
+          getAllMyProjectsApiTap(context);
+          // Pop twice - once for create screen, once for detail screen
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+          
+          setBtnLoading(false);
+          clearCreateProjectData();
+          notifyListeners();
+        },
+        onError: (error) {
+          setCreating(false);
+          showToast("Failed to update project: $error", type: toastType.error);
+          AppLogger.error(message: "updateProject error: $error");
+          setBtnLoading(false);
+          notifyListeners();
+        },
+      );
+    } catch (e) {
+      setCreating(false);
+      showToast("An error occurred", type: toastType.error);
+      AppLogger.error(message: "updateProjectApiCall exception: $e");
+      setBtnLoading(false);
+      notifyListeners();
+    }
   }
 
   //..........................Get All Students API Call.............................//
@@ -1351,6 +1573,16 @@ class CounsellorProvider with ChangeNotifier {
   String? _meetingsError;
   String? get meetingsError => _meetingsError;
 
+  // My Meetings State
+  FilterMultiMeetingByCreatorModel? _myMeetingsData;
+  FilterMultiMeetingByCreatorModel? get myMeetingsData => _myMeetingsData;
+
+  bool _myMeetingsLoading = false;
+  bool get myMeetingsLoading => _myMeetingsLoading;
+
+  String? _myMeetingsError;
+  String? get myMeetingsError => _myMeetingsError;
+
   void setMeetingsLoading(bool value) {
     _meetingsLoading = value;
     notifyListeners();
@@ -1385,6 +1617,52 @@ class CounsellorProvider with ChangeNotifier {
       _meetingsError = e.toString();
       setMeetingsLoading(false);
       AppLogger.error(message: "fetchCounsellorMeetings exception: $e");
+    }
+  }
+
+  // Fetch My Meetings
+  void fetchMyMeetingsTap() {
+    ConnectionDetector.connectCheck().then((value) {
+      if (value) {
+        fetchMyMeetings();
+      } else {
+        _myMeetingsError = "Internet not available";
+        notifyListeners();
+      }
+    });
+  }
+
+  Future<void> fetchMyMeetings() async {
+    _myMeetingsLoading = true;
+    _myMeetingsError = null;
+    notifyListeners();
+    
+    try {
+      await DioClient.getNewMeetings(
+        onSuccess: (response) {
+          try {
+            _myMeetingsData = FilterMultiMeetingByCreatorModel.fromJson(response);
+            _myMeetingsLoading = false;
+            _myMeetingsError = null;
+            notifyListeners();
+          } catch (e) {
+            AppLogger.error(message: "Error parsing My Meetings data: $e");
+            _myMeetingsLoading = false;
+            _myMeetingsError = "Failed to parse meetings data";
+            notifyListeners();
+          }
+        },
+        onError: (error) {
+          _myMeetingsLoading = false;
+          _myMeetingsError = error;
+          notifyListeners();
+        },
+      );
+    } catch (e) {
+      _myMeetingsLoading = false;
+      _myMeetingsError = e.toString();
+      notifyListeners();
+      AppLogger.error(message: "fetchMyMeetings exception: $e");
     }
   }
 
@@ -1435,6 +1713,79 @@ class CounsellorProvider with ChangeNotifier {
 
   //........................CREATE MEETINGS API CALL...........................//
 
+  bool _creatingMeeting = false;
+  bool get creatingMeeting => _creatingMeeting;
+
+  void setCreatingMeeting(bool value) {
+    _creatingMeeting = value;
+    notifyListeners();
+  }
+
+  void createMeetingApiTap(BuildContext context, {
+    required String title,
+    required String description,
+    required String meetingLink,
+    required List<String> studentEmails,
+    required List<String> mentorEmails,
+    required List<String> parentEmails,
+  }) {
+    ConnectionDetector.connectCheck().then((value) {
+      if (value) {
+        createMeetingApiCall(
+          context,
+          title: title,
+          description: description,
+          meetingLink: meetingLink,
+          studentEmails: studentEmails,
+          mentorEmails: mentorEmails,
+          parentEmails: parentEmails,
+        );
+      } else {
+        showToast("No internet connection", type: toastType.error);
+      }
+    });
+  }
+
+  Future<void> createMeetingApiCall(
+    BuildContext context, {
+    required String title,
+    required String description,
+    required String meetingLink,
+    required List<String> studentEmails,
+    required List<String> mentorEmails,
+    required List<String> parentEmails,
+  }) async {
+    setCreatingMeeting(true);
+    try {
+      final body = {
+        'meeting_title': title,
+        'meeting_description': description,
+        'meeting_link': meetingLink,
+        'student_emails': studentEmails,
+        'mentor_emails': mentorEmails,
+        'parent_emails': parentEmails,
+      };
+
+      await DioClient.counsellorCreateMeetingApi(
+        body: body,
+        onSuccess: (response) {
+          AppLogger.debug(message: "Meeting created successfully: $response");
+          showToast("Meeting created successfully!", type: toastType.success);
+          setCreatingMeeting(false);
+          Navigator.pop(context);
+        },
+        onError: (error) {
+          AppLogger.error(message: "Error creating meeting: $error");
+          showToast("Failed to create meeting", type: toastType.error);
+          setCreatingMeeting(false);
+        },
+      );
+    } catch (e) {
+      AppLogger.error(message: "createMeetingApiCall exception: $e");
+      showToast("Failed to create meeting", type: toastType.error);
+      setCreatingMeeting(false);
+    }
+  }
 
   
 }

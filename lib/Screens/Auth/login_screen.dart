@@ -4,6 +4,7 @@ import 'package:teen_theory/Customs/custom_button.dart';
 import 'package:teen_theory/Customs/custom_textfield.dart';
 import 'package:teen_theory/Providers/AuthProviders/auth_provider.dart';
 import 'package:teen_theory/Resources/fonts.dart';
+import 'package:teen_theory/Screens/Auth/forgot_password.dart';
 import 'package:teen_theory/Utils/helper.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -55,6 +56,11 @@ class LoginScreen extends StatelessWidget {
                         controller: pvd.passwordController,
                         headerText: "Password:",
                       ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => ForgotPasswordScreen()));
+                        },
+                        child: Text("Forgot Password?", style: textStyle(color: Colors.blue))),
                       hSpace(height: 30),
                       Padding(
                         padding: const EdgeInsets.all(8.0),

@@ -8,7 +8,6 @@ import 'package:teen_theory/Providers/AuthProviders/auth_provider.dart';
 import 'package:teen_theory/Providers/CounsellorProvider/counsellor_provider.dart';
 import 'package:teen_theory/Providers/MentorProvider/mentor_provider.dart';
 import 'package:teen_theory/Resources/assets.dart';
-import 'package:teen_theory/Resources/colors.dart';
 import 'package:teen_theory/Screens/CounsellorDashboard/ApprovedTasks/approved_tasks.dart';
 import 'package:teen_theory/Screens/CounsellorDashboard/CounsellorNotification/counsellor_notification.dart';
 import 'package:teen_theory/Screens/CounsellorDashboard/CreateProject/create_project_main.dart';

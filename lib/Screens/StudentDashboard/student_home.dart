@@ -2,6 +2,7 @@ import 'package:circular_chart_flutter/circular_chart_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:teen_theory/Models/CommonModels/multi_participatemeeting_model.dart' as participate_model;
 import 'package:teen_theory/Providers/StudentProviders/detail_project_provider.dart';
 import 'package:teen_theory/Providers/StudentProviders/student_profile_provider.dart';
 import 'package:teen_theory/Providers/StudentProviders/student_meeting_provider.dart';
@@ -15,6 +16,7 @@ import 'package:teen_theory/Services/apis.dart';
 import 'package:teen_theory/Shimmer/StudentShimmer/active_project_shimmer.dart';
 import 'package:teen_theory/Shimmer/StudentShimmer/appbar_shimmer.dart';
 import 'package:teen_theory/Utils/helper.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StudentHome extends StatefulWidget {
   const StudentHome({super.key});
@@ -23,18 +25,28 @@ class StudentHome extends StatefulWidget {
   State<StudentHome> createState() => _StudentHomeState();
 }
 
-class _StudentHomeState extends State<StudentHome> {
+class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStateMixin {
+  late TabController _meetingTabController;
+
 @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    _meetingTabController = TabController(length: 2, vsync: this);
+    
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         context.read<StudentProfileProvider>().getStudentProfileApiTap(context);
         context.read<DetailProjectProvider>().filteredMeetingLinkApiTap(context);
       context.read<StudentMeetingProvider>().fetchMeetings();
+      context.read<StudentMeetingProvider>().fetchParticipantMeetings();
       context.read<StudentNotificationProvider>().fetchNotifications();
     });
   
+  }
+
+  @override
+  void dispose() {
+    _meetingTabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -47,6 +59,7 @@ class _StudentHomeState extends State<StudentHome> {
             Future.sync(() => context.read<StudentProfileProvider>().getStudentProfileApiTap(context)),
             Future.sync(() => context.read<DetailProjectProvider>().filteredMeetingLinkApiTap(context)),
             Future.sync(() => context.read<StudentMeetingProvider>().fetchMeetings()),
+            Future.sync(() => context.read<StudentMeetingProvider>().fetchParticipantMeetings()),
             Future.sync(() => context.read<StudentNotificationProvider>().fetchNotifications()),
           ]);
         },
@@ -876,33 +889,35 @@ class _StudentHomeState extends State<StudentHome> {
                   // ...existing code...
                   hSpace(height: 20),
         
-                  // Upcoming Meetings section
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
+                  // Upcoming Meetings section with Tabs
+                  Consumer<StudentMeetingProvider>(
+                    builder: (context, meetingPvd, child) {
+                      final counsellorMeetings = meetingPvd.upcomingMeetings;
+                      final participantMeetings = meetingPvd.participantMeetings;
+                      
+                      return Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          // Header
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
+                        child: Column(
+                          children: [
+                            // Header with Tabs
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                              child: Row(
                                 children: [
                                   Text('👥 ', style: TextStyle(fontSize: 20)),
                                   Text(
-                                    'My Meetings',
+                                    'Meetings',
                                     style: textStyle(
                                       fontFamily: AppFonts.interBold,
                                       fontSize: 18,
@@ -910,345 +925,82 @@ class _StudentHomeState extends State<StudentHome> {
                                   ),
                                 ],
                               ),
-                              // InkWell(
-                              //   onTap: () {
-                              //     Navigator.of(context).push(MaterialPageRoute(builder: (context) => MyMeetingScreen()));
-                              //   },
-                              //   child: Container(
-                              //     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              //     decoration: BoxDecoration(
-                              //       gradient: LinearGradient(
-                              //         colors: [Color(0xFFFF758C), Color(0xFFFF7EB3)],
-                              //       ),
-                              //       borderRadius: BorderRadius.circular(20),
-                              //     ),
-                              //     child: Text(
-                              //       'View all',
-                              //       style: textStyle(
-                              //         color: Colors.white,
-                              //         fontFamily: AppFonts.interMedium,
-                              //         fontSize: 13,
-                              //       ),
-                              //     ),
-                              //   ),
-                              // ),
-                            ],
-                          ),
-                          const Divider(),
-        
-                          // Meetings list
-                          Consumer<DetailProjectProvider>(builder: (context, pvd, child) {
-                            final meetings = pvd.filteredMeetingData?.data ?? [];
-                            return ListView.separated(
-                            physics: const NeverScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            itemCount: meetings.length,
-                            separatorBuilder: (_, __) => hSpace(height: 8),
-                            itemBuilder: (context, index) {
-                              final meetingData = meetings[index];
-                              final isJoinable = index == 0;
-                              return Container(
-                                margin: EdgeInsets.only(bottom: 8),
-                                decoration: BoxDecoration(
-                                  color: Color(0xFFF8F9FC),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isJoinable
-                                      ? Color(0xFFFF758C).withValues(alpha: 0.3)
-                                      : Colors.grey.shade200,
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(14.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                            ),
+                            
+                            // TabBar
+                            TabBar(
+                              controller: _meetingTabController,
+                              indicatorColor: Color(0xFF2980B9),
+                              labelColor: Color(0xFF2980B9),
+                              unselectedLabelColor: Colors.grey,
+                              labelStyle: textStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              tabs: [
+                                Tab(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      // Title row: icon, title + subtitle, action
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // meeting icon with gradient
-                                          Container(
-                                            width: 44,
-                                            height: 44,
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                colors: isJoinable
-                                                  ? [Color(0xFFFF758C), Color(0xFFFF7EB3)]
-                                                  : [Color(0xFF667EEA), Color(0xFF764BA2)],
-                                              ),
-                                              borderRadius: BorderRadius.circular(
-                                                10,
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: (isJoinable 
-                                                    ? Color(0xFFFF758C)
-                                                    : Color(0xFF667EEA)).withValues(alpha: 0.3),
-                                                  blurRadius: 8,
-                                                  offset: Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Icon(
-                                              Icons.videocam_rounded,
-                                              size: 22,
-                                              color: Colors.white,
-                                            ),
+                                      Text('My Meetings'),
+                                      if (participantMeetings.isNotEmpty) ...[
+                                        wSpace(width: 6),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFF2980B9),
+                                            borderRadius: BorderRadius.circular(10),
                                           ),
-                                          const SizedBox(width: 12),
-        
-                                          // title & subtitle
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  meetingData.projectName ?? 'N/A',
-                                                  style: textStyle(
-                                                    fontFamily:
-                                                        AppFonts.interBold,
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 6),
-                                                Text(
-                                                  meetingData.title ?? 'N/A',
-                                                  style: textStyle(
-                                                    color: AppColors.lightGrey2,
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                          child: Text(
+                                            '${participantMeetings.length}',
+                                            style: textStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
                                           ),
-                           
-                                          // action text/button
-                                          
-                                              InkWell(
-                                                onTap: () {
-                                                  pvd.openMeetLink(link: meetingData.meetingLink ?? "");
-                                                },
-                                                child: Container(
-                                                    padding: EdgeInsets.symmetric(
-                                                      horizontal: 14,
-                                                      vertical: 8,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      gradient: LinearGradient(
-                                                        colors: [Color(0xFFFF758C), Color(0xFFFF7EB3)],
-                                                      ),
-                                                      borderRadius: BorderRadius.circular(20),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: Color(0xFFFF758C).withValues(alpha: 0.3),
-                                                          blurRadius: 8,
-                                                          offset: Offset(0, 2),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    child: Text(
-                                                      'Join 🎥',
-                                                      style: textStyle(
-                                                        color: Colors.white,
-                                                        fontFamily:
-                                                            AppFonts.interMedium,
-                                                        fontSize: 13,
-                                                      ),
-                                                    ),
-                                                  ),
-                                              )
-                                        ],
-                                      ),
-        
-                                      const SizedBox(height: 12),
-        
-                                      // date/time row
-                                      Row(
-                                        children: [
-                                          Text('📅 ', style: TextStyle(fontSize: 14)),
-                                          Text(
-                                            meetingData.dateTime == null
-                                              ? '-'
-                                              : (() {
-                                                  try {
-                                                    final dt = DateTime.parse(meetingData.dateTime!);
-                                                    return DateFormat('dd MMM yyyy, hh:mm a').format(dt);
-                                                  } catch (_) {
-                                                    return meetingData.dateTime!;
-                                                  }
-                                                })(),
-                                            style: textStyle(
-                                              color: AppColors.lightGrey2,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
-                              );
-                            },
-                          ); 
-                          })
-                        ],
-                      ),
-                    ),
+                                Tab(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text('Counsellor Meeting'),
+                                      if (counsellorMeetings.isNotEmpty) ...[
+                                        wSpace(width: 6),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFF667EEA),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            '${counsellorMeetings.length}',
+                                            style: textStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            // TabBarView
+                            SizedBox(
+                              height: 400,
+                              child: TabBarView(
+                                controller: _meetingTabController,
+                                children: [
+                                  // My Meetings Tab
+                                  _buildParticipantMeetingsTab(participantMeetings),
+                                  
+                                  // Counsellor Meeting Tab
+                                  _buildCounsellorMeetingsTab(),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-        
-                  hSpace(height: 20),
-                  // ...existing code...
-                  // ...existing code...
-                  // Recent Activity
-                  // Container(
-                  //   width: double.infinity,
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.white,
-                  //     borderRadius: BorderRadius.circular(16),
-                  //     boxShadow: [
-                  //       BoxShadow(
-                  //         color: Colors.black.withValues(alpha: 0.06),
-                  //         blurRadius: 12,
-                  //         offset: Offset(0, 4),
-                  //       ),
-                  //     ],
-                  //   ),
-                  //   child: Padding(
-                  //     padding: const EdgeInsets.all(16.0),
-                  //     child: Column(
-                  //       children: [
-                  //         Row(
-                  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //           children: [
-                  //             Row(
-                  //               children: [
-                  //                 Text('⚡ ', style: TextStyle(fontSize: 20)),
-                  //                 Text(
-                  //                   'Recent Activity',
-                  //                   style: textStyle(
-                  //                     fontFamily: AppFonts.interBold,
-                  //                     fontSize: 18,
-                  //                   ),
-                  //                 ),
-                  //               ],
-                  //             ),
-                  //             Container(
-                  //               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  //               decoration: BoxDecoration(
-                  //                 gradient: LinearGradient(
-                  //                   colors: [Color(0xFF6DD5FA), Color(0xFF2980B9)],
-                  //                 ),
-                  //                 borderRadius: BorderRadius.circular(20),
-                  //               ),
-                  //               child: Text(
-                  //                 'View all',
-                  //                 style: textStyle(
-                  //                   color: Colors.white,
-                  //                   fontFamily: AppFonts.interMedium,
-                  //                   fontSize: 13,
-                  //                 ),
-                  //               ),
-                  //             ),
-                  //           ],
-                  //         ),
-                  //         const Divider(),
-        
-                  //         // single activity card (repeat / map for multiple items)
-                  //         Padding(
-                  //           padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  //           child: Container(
-                  //             width: double.infinity,
-                  //             decoration: BoxDecoration(
-                  //               color: Color(0xFFF8F9FC),
-                  //               borderRadius: BorderRadius.circular(12),
-                  //               border: Border.all(
-                  //                 color: Colors.green.shade100,
-                  //               ),
-                  //             ),
-                  //             child: Padding(
-                  //               padding: const EdgeInsets.all(14.0),
-                  //               child: Row(
-                  //                 crossAxisAlignment: CrossAxisAlignment.start,
-                  //                 children: [
-                  //                   // green check circle with gradient
-                  //                   Container(
-                  //                     width: 40,
-                  //                     height: 40,
-                  //                     decoration: BoxDecoration(
-                  //                       gradient: LinearGradient(
-                  //                         colors: [Color(0xFF56CCF2), Color(0xFF2F80ED)],
-                  //                       ),
-                  //                       shape: BoxShape.circle,
-                  //                       boxShadow: [
-                  //                         BoxShadow(
-                  //                           color: Color(0xFF56CCF2).withValues(alpha: 0.3),
-                  //                           blurRadius: 8,
-                  //                           offset: Offset(0, 2),
-                  //                         ),
-                  //                       ],
-                  //                     ),
-                  //                     child: const Icon(
-                  //                       Icons.check_rounded,
-                  //                       color: Colors.white,
-                  //                       size: 22,
-                  //                     ),
-                  //                   ),
-        
-                  //                   const SizedBox(width: 12),
-        
-                  //                   // text column
-                  //                   Expanded(
-                  //                     child: Column(
-                  //                       crossAxisAlignment:
-                  //                           CrossAxisAlignment.start,
-                  //                       children: [
-                  //                         Text(
-                  //                           'Task completed: "Research Paper Outline" ✨',
-                  //                           style: textStyle(
-                  //                             fontFamily: AppFonts.interMedium,
-                  //                             fontSize: 14,
-                  //                           ),
-                  //                         ),
-                  //                         const SizedBox(height: 6),
-                  //                         Row(
-                  //                           children: [
-                  //                             Text('🕐 ', style: TextStyle(fontSize: 12)),
-                  //                             Text(
-                  //                               '2 Hours ago',
-                  //                               style: textStyle(
-                  //                                 color: AppColors.lightGrey2,
-                  //                                 fontSize: 13,
-                  //                               ),
-                  //                             ),
-                  //                             Text(' • ', style: TextStyle(color: AppColors.lightGrey2)),
-                  //                             Text('📚 ', style: TextStyle(fontSize: 12)),
-                  //                             Flexible(
-                  //                               child: Text(
-                  //                                 'AI & ML Project',
-                  //                                 style: textStyle(
-                  //                                   color: AppColors.lightGrey2,
-                  //                                   fontSize: 13,
-                  //                                 ),
-                  //                                 overflow: TextOverflow.ellipsis,
-                  //                               ),
-                  //                             ),
-                  //                           ],
-                  //                         ),
-                  //                       ],
-                  //                     ),
-                  //                   ),
-                  //                 ],
-                  //               ),
-                  //             ),
-                  //           ),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
                   hSpace(height: 20),
                 ],
               ),
@@ -1256,6 +1008,370 @@ class _StudentHomeState extends State<StudentHome> {
           ),
         ),
       ),
+    );
+  }
+
+  // Build Participant Meetings Tab
+  Widget _buildParticipantMeetingsTab(List<participate_model.Datum> meetings) {
+    if (meetings.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.event_busy, size: 48, color: Colors.grey),
+            hSpace(height: 12),
+            Text(
+              'No meetings yet',
+              style: textStyle(fontSize: 14, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: EdgeInsets.all(16),
+      itemCount: meetings.length,
+      separatorBuilder: (_, __) => hSpace(height: 12),
+      itemBuilder: (context, index) {
+        final meeting = meetings[index];
+        return Container(
+          decoration: BoxDecoration(
+            color: Color(0xFFF8F9FC),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF6DD5FA), Color(0xFF2980B9)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFF6DD5FA).withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.videocam_rounded,
+                        size: 22,
+                        color: Colors.white,
+                      ),
+                    ),
+                    wSpace(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            meeting.meetingTitle ?? 'No Title',
+                            style: textStyle(
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          hSpace(height: 4),
+                          if (meeting.meetingDescription != null && meeting.meetingDescription!.isNotEmpty)
+                            Text(
+                              meeting.meetingDescription!,
+                              style: textStyle(
+                                color: AppColors.lightGrey2,
+                                fontSize: 12,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (meeting.meetingLink != null && meeting.meetingLink!.isNotEmpty)
+                      InkWell(
+                        onTap: () async {
+                          try {
+                            String urlString = meeting.meetingLink!;
+                            if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+                              urlString = 'https://$urlString';
+                            }
+                            final url = Uri.parse(urlString);
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                            } else {
+                              showToast('Could not launch meeting link', type: toastType.error);
+                            }
+                          } catch (e) {
+                            showToast('Invalid meeting link', type: toastType.error);
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFFFF758C), Color(0xFFFF7EB3)],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFFF758C).withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            'Join 🎥',
+                            style: textStyle(
+                              color: Colors.white,
+                              fontFamily: AppFonts.interMedium,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                hSpace(height: 12),
+                Row(
+                  children: [
+                    Text('📅 ', style: TextStyle(fontSize: 14)),
+                    Text(
+                      meeting.createdAt != null
+                          ? DateFormat('dd MMM yyyy, hh:mm a').format(meeting.createdAt!)
+                          : '-',
+                      style: textStyle(
+                        color: AppColors.lightGrey2,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+                if (meeting.studentEmails != null && meeting.studentEmails!.isNotEmpty ||
+                    meeting.mentorEmails != null && meeting.mentorEmails!.isNotEmpty ||
+                    meeting.parentEmails != null && meeting.parentEmails!.isNotEmpty) ...[
+                  hSpace(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      if (meeting.studentEmails != null && meeting.studentEmails!.isNotEmpty)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF6DD5FA).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${meeting.studentEmails!.length} Students',
+                            style: textStyle(fontSize: 11, color: Color(0xFF2980B9)),
+                          ),
+                        ),
+                      if (meeting.mentorEmails != null && meeting.mentorEmails!.isNotEmpty)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF667EEA).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${meeting.mentorEmails!.length} Mentors',
+                            style: textStyle(fontSize: 11, color: Color(0xFF667EEA)),
+                          ),
+                        ),
+                      if (meeting.parentEmails != null && meeting.parentEmails!.isNotEmpty)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFFFA751).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${meeting.parentEmails!.length} Parents',
+                            style: textStyle(fontSize: 11, color: Color(0xFFFF6B35)),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Build Counsellor Meetings Tab (existing meetings from DetailProjectProvider)
+  Widget _buildCounsellorMeetingsTab() {
+    return Consumer<DetailProjectProvider>(
+      builder: (context, pvd, child) {
+        final meetings = pvd.filteredMeetingData?.data ?? [];
+        
+        if (meetings.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.event_busy, size: 48, color: Colors.grey),
+                hSpace(height: 12),
+                Text(
+                  'No counsellor meetings yet',
+                  style: textStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.separated(
+          padding: EdgeInsets.all(16),
+          itemCount: meetings.length,
+          separatorBuilder: (_, __) => hSpace(height: 12),
+          itemBuilder: (context, index) {
+            final meetingData = meetings[index];
+            final isJoinable = index == 0;
+            
+            return Container(
+              decoration: BoxDecoration(
+                color: Color(0xFFF8F9FC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isJoinable
+                      ? Color(0xFFFF758C).withValues(alpha: 0.3)
+                      : Colors.grey.shade200,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: isJoinable
+                                  ? [Color(0xFFFF758C), Color(0xFFFF7EB3)]
+                                  : [Color(0xFF667EEA), Color(0xFF764BA2)],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isJoinable
+                                        ? Color(0xFFFF758C)
+                                        : Color(0xFF667EEA))
+                                    .withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.videocam_rounded,
+                            size: 22,
+                            color: Colors.white,
+                          ),
+                        ),
+                        wSpace(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                meetingData.projectName ?? 'N/A',
+                                style: textStyle(
+                                  fontFamily: AppFonts.interBold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              hSpace(height: 6),
+                              Text(
+                                meetingData.title ?? 'N/A',
+                                style: textStyle(
+                                  color: AppColors.lightGrey2,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            pvd.openMeetLink(link: meetingData.meetingLink ?? "");
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFFFF758C), Color(0xFFFF7EB3)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFFFF758C).withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              'Join 🎥',
+                              style: textStyle(
+                                color: Colors.white,
+                                fontFamily: AppFonts.interMedium,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    hSpace(height: 12),
+                    Row(
+                      children: [
+                        Text('📅 ', style: TextStyle(fontSize: 14)),
+                        Text(
+                          meetingData.dateTime == null
+                              ? '-'
+                              : (() {
+                                  try {
+                                    final dt = DateTime.parse(meetingData.dateTime!);
+                                    return DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+                                  } catch (_) {
+                                    return meetingData.dateTime!;
+                                  }
+                                })(),
+                          style: textStyle(
+                            color: AppColors.lightGrey2,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

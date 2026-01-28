@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:teen_theory/Customs/custom_button.dart';
+import 'package:teen_theory/Models/CounsellorModels/all_my_project_model.dart';
 import 'package:teen_theory/Providers/AuthProviders/auth_provider.dart';
 import 'package:teen_theory/Providers/CounsellorProvider/counsellor_provider.dart';
 import 'package:teen_theory/Screens/CounsellorDashboard/CreateProject/CreateProjectSteps/step_2.dart';
@@ -14,13 +15,29 @@ import 'package:teen_theory/Screens/CounsellorDashboard/CreateProject/CreateProj
 import 'package:teen_theory/Screens/CounsellorDashboard/CreateProject/CreateProjectSteps/steps_1.dart';
 
 class CreateProjectMain extends StatefulWidget {
-  const CreateProjectMain({super.key});
+  final MyProject? projectToEdit;
+  
+  const CreateProjectMain({super.key, this.projectToEdit});
 
   @override
   State<CreateProjectMain> createState() => _CreateProjectMainState();
 }
 
 class _CreateProjectMainState extends State<CreateProjectMain> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.projectToEdit != null) {
+        // If editing, populate the form with project data
+        context.read<CounsellorProvider>().populateProjectForEdit(widget.projectToEdit!);
+      } else {
+        // If creating new project, clear all data
+        context.read<CounsellorProvider>().clearCreateProjectData();
+      }
+    });
+  }
+
   @override
   void dispose() {
     context.read<CounsellorProvider>().dispose();
@@ -42,9 +59,9 @@ class _CreateProjectMainState extends State<CreateProjectMain> {
                 icon: const Icon(Icons.arrow_back, color: Colors.black),
                 onPressed: () => pvd.previousStep(context),
               ),
-              title: const Text(
-                'Create Project',
-                style: TextStyle(
+              title: Text(
+                pvd.isEditMode ? 'Edit Project' : 'Create Project',
+                style: const TextStyle(
                   color: Colors.black,
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
@@ -151,12 +168,18 @@ class _CreateProjectMainState extends State<CreateProjectMain> {
                         fontsize: 16,
                         height: 55,
                         borderRadius: 8,
-                        title: pvd.currentStep == pvd.totalSteps ? 'Create Project' : 'Next Step', 
+                        title: pvd.currentStep == pvd.totalSteps 
+                            ? (pvd.isEditMode ? 'Update Project' : 'Create Project') 
+                            : 'Next Step', 
                         isLoading: pvd.isCreating, onTap: () {
                          if (pvd.currentStep == pvd.totalSteps) {
                               final authPvd = context.read<AuthProvider>();
                               final counsellorEmail = authPvd.profileData?.data?.email;
-                              pvd.createProjectApiTap(context, counsellorEmail: counsellorEmail);
+                              if (pvd.isEditMode) {
+                                pvd.updateProjectApiTap(context, counsellorEmail: counsellorEmail);
+                              } else {
+                                pvd.createProjectApiTap(context, counsellorEmail: counsellorEmail);
+                              }
                             } else {
                               // Validate current step before proceeding
                               final validationError = pvd.validateCurrentStep();

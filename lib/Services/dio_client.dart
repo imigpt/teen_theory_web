@@ -1,9 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:teen_theory/Models/AuthModels/all_pass_request_model.dart';
 import 'package:teen_theory/Models/AuthModels/user_login_model.dart';
 import 'package:teen_theory/Models/CommonModels/all_counsellor_model.dart';
 import 'package:teen_theory/Models/CommonModels/all_meeting_model.dart';
 import 'package:teen_theory/Models/CommonModels/all_mentor_model.dart';
+import 'package:teen_theory/Models/CommonModels/all_parent__model.dart';
 import 'package:teen_theory/Models/CommonModels/all_student_model.dart';
+import 'package:teen_theory/Models/CommonModels/multi_participatemeeting_model.dart';
 import 'package:teen_theory/Models/CommonModels/all_ticket_model.dart';
 import 'package:teen_theory/Models/CommonModels/chat_messages_model.dart';
 import 'package:teen_theory/Models/CommonModels/conversion_id_model.dart';
@@ -66,6 +69,102 @@ class DioClient {
         throw Exception("Error: ${response.statusCode}");
       }
     }  catch (e) {
+      onError(e.toString());
+      rethrow;
+    }
+  }
+
+  // Forgot Password API
+  static Future<dynamic> forgotPassword({
+    required dynamic body,
+    required Function(dynamic response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      AppLogger.debug(message: "Calling forgot password API: ${Apis.forgotPassword}");
+      AppLogger.debug(message: "Body: $body");
+      
+      Response response = await dio.post(
+        Apis.forgotPassword,
+        data: body,
+      );
+      
+      AppLogger.debug(message: "Forgot password response status: ${response.statusCode}");
+      AppLogger.debug(message: "Forgot password response data: ${response.data}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        onSuccess(response.data);
+        return response.data;
+      } else {
+        onError(response.data['message'] ?? 'Failed to send reset request');
+        return null;
+      }
+    } catch (e) {
+      AppLogger.error(message: "Forgot password error: $e");
+      onError(e.toString());
+      rethrow;
+    }
+  }
+
+  // Get Password Change Requests API
+  static Future<PassRequestEmailModel> getPasswordChangeRequests({
+    required Function(PassRequestEmailModel response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      Map<String, String> headers = await _getAuthHeaders();
+      AppLogger.debug(message: "Calling API: ${Apis.passwordChangeRequests}");
+      
+      Response response = await dio.get(
+        Apis.passwordChangeRequests,
+        options: Options(headers: headers),
+      );
+      
+      AppLogger.debug(message: "Password change requests response status: ${response.statusCode}");
+      AppLogger.debug(message: "Password change requests response data: ${response.data}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        PassRequestEmailModel model = PassRequestEmailModel.fromJson(response.data);
+        onSuccess(model);
+        return model;
+      } else {
+        onError(response.data['message'] ?? 'Failed to fetch password change requests');
+        throw Exception("Error: ${response.statusCode}");
+      }
+    } catch (e) {
+      AppLogger.error(message: "Password change requests error: $e");
+      onError(e.toString());
+      rethrow;
+    }
+  }
+
+  // Change Password API
+  static Future<dynamic> changePassword({
+    required dynamic body,
+    required Function(dynamic response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      AppLogger.debug(message: "Calling change password API: ${Apis.changePassword}");
+      AppLogger.debug(message: "Body: $body");
+      
+      Response response = await dio.post(
+        Apis.changePassword,
+        data: body,
+      );
+      
+      AppLogger.debug(message: "Change password response status: ${response.statusCode}");
+      AppLogger.debug(message: "Change password response data: ${response.data}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        onSuccess(response.data);
+        return response.data;
+      } else {
+        onError(response.data['message'] ?? 'Failed to change password');
+        return null;
+      }
+    } catch (e) {
+      AppLogger.error(message: "Change password error: $e");
       onError(e.toString());
       rethrow;
     }
@@ -272,6 +371,37 @@ class DioClient {
         throw Exception("Error: ${response.statusCode}");
       }
     }  catch (e) {
+      onError(e.toString());
+      rethrow;
+    }
+  }
+
+  //.........................GET ALL PARENTS...........................//
+  static Future<AllParentModel> getAllParents({
+    required Function(AllParentModel response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      Map<String, String> headers = await _getAuthHeaders();
+      AppLogger.debug(message: "Calling API: ${Apis.allParents}");
+      Response response = await dio.get(
+        Apis.allParents,
+        options: Options(headers: headers),
+      );
+      AppLogger.debug(message: "allParent response status: ${response.statusCode}");
+      AppLogger.debug(message: "allParent response data: ${response.data}");
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "Token: ${token}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AllParentModel allParentModel = AllParentModel.fromJson(response.data);
+        onSuccess(allParentModel);
+        return allParentModel;
+      } else {
+        onError("Error: ${response.statusCode}");
+        throw Exception("Error: ${response.statusCode}");
+      }
+    } catch (e) {
       onError(e.toString());
       rethrow;
     }
@@ -994,6 +1124,116 @@ class DioClient {
     }
   }
 
+  //.......................CREATE COUNSELLOR MEETING API......................//
+
+  static Future<Response> counsellorCreateMeetingApi({
+    required dynamic body,
+    required Function(dynamic response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "API: ${Apis.createNewMeetingApi}");
+      AppLogger.debug(message: "Token: $token");
+      AppLogger.debug(message: "Body: $body");
+      
+      Response response = await dio.post(
+        Apis.createNewMeetingApi,
+        data: body,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      AppLogger.debug(message: "response: $response");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        onSuccess(response.data);
+        return response;
+      } else {
+        onError("Error: ${response.statusCode}");
+        throw Exception("Error: ${response.statusCode}");
+      }
+    } catch (e) {
+      AppLogger.error(message: "counsellorCreateMeetingApi error: $e");
+      onError(e.toString());
+      rethrow;
+    }
+  }
+
+  //.......................GET NEW MEETINGS API......................//
+
+  static Future<dynamic> getNewMeetings({
+    required Function(dynamic response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "Get New Meetings Token: $token");
+      
+      Response response = await dio.get(
+        Apis.getNewMeetingsApi,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
+      AppLogger.debug(message: "getNewMeetings response: ${response.data}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        onSuccess(response.data);
+      } else {
+        onError(response.data['message'] ?? 'Failed to fetch meetings');
+      }
+      
+      return response;
+    } catch (e) {
+      AppLogger.error(message: "getNewMeetings error: $e");
+      onError(e.toString());
+      rethrow;
+    }
+  }
+
+  //.......................GET MY PARTICIPANT MEETINGS API......................//
+
+  static Future<ParticipateMeetingModel> getMyParticipantMeetings({
+    required Function(ParticipateMeetingModel response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "Get My Participant Meetings Token: $token");
+      
+      Response response = await dio.get(
+        Apis.myParticipantMeetingsApi,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
+      AppLogger.debug(message: "getMyParticipantMeetings response: ${response.data}");
+      
+      final participateMeetingModel = ParticipateMeetingModel.fromJson(response.data);
+      onSuccess(participateMeetingModel);
+      
+      return participateMeetingModel;
+    } catch (e) {
+      AppLogger.error(message: "getMyParticipantMeetings error: $e");
+      onError(e.toString());
+      rethrow;
+    }
+  }
+
   //...................ALL COUNSELLOR API.........................//
 
     static Future<AllCounsellorModel> allCounsellorsApi({
@@ -1082,12 +1322,6 @@ class DioClient {
       
       Response response = await dio.get(
         Apis.getrequestMeetingByTokenApi,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            // Don't set Content-Type for FormData, Dio will set it automatically
-          },
-        ),
       );
       AppLogger.debug(message: "response: $response");
       
@@ -1140,6 +1374,48 @@ class DioClient {
     } catch (e) {
       AppLogger.error(message: "allCounsellorApi error: $e");
       onError(e.toString());
+      rethrow;
+    }
+  }
+
+  //................UPDATE PROJECT API.......................//
+
+  static Future<dynamic> updateProject({
+    required FormData body,
+    required Function(dynamic response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "API: ${Apis.updateProjectApi}");
+      AppLogger.debug(message: "Token: $token");
+      AppLogger.debug(message: "Body: ${body.fields}");
+
+      Response response = await dio.put(
+        Apis.updateProjectApi,
+        data: body,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      AppLogger.debug(message: "response: $response");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        onSuccess(response.data);
+        return response.data;
+      } else {
+        onError("Error: ${response.statusCode}");
+        throw Exception("Error: ${response.statusCode}");
+      }
+    } catch (e) {
+      AppLogger.error(message: "updateProject error: $e");
+      if (e is DioException) {
+        onError(e.response?.data?['detail'] ?? e.message ?? "Unknown error");
+      } else {
+        onError(e.toString());
+      }
       rethrow;
     }
   }

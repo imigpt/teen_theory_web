@@ -1,12 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:teen_theory/Common/ChatScreens/chat_list.dart';
 import 'package:teen_theory/Models/MentorModels/mentor_project_model.dart';
+import 'package:teen_theory/Providers/MentorProvider/mentor_provider.dart';
+import 'package:teen_theory/Resources/colors.dart';
 import 'package:teen_theory/Resources/fonts.dart';
 import 'package:teen_theory/Utils/helper.dart';
 
-class ProjectDetails extends StatelessWidget {
+class ProjectDetails extends StatefulWidget {
   final Datum? projectData;
   const ProjectDetails({super.key, this.projectData});
+
+  @override
+  State<ProjectDetails> createState() => _ProjectDetailsState();
+}
+
+class _ProjectDetailsState extends State<ProjectDetails> {
+  late Datum? projectData;
+
+  @override
+  void initState() {
+    super.initState();
+    projectData = widget.projectData;
+  }
+
+  void updateMilestoneStatus(String milestoneId, String newStatus) {
+    if (projectData?.milestones != null) {
+      setState(() {
+        for (var milestone in projectData!.milestones!) {
+          if (milestone.id == milestoneId) {
+            milestone.status = newStatus;
+            break;
+          }
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -337,64 +366,274 @@ class ProjectDetails extends StatelessWidget {
   }
 
   Widget _buildMilestoneCard(Milestone milestone) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.white, Color(0xFFF8F9FC)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  milestone.name ?? 'Unnamed Milestone',
-                  style: textStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: _getMilestoneStatusGradient(milestone.status),
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _getMilestoneStatusColor(milestone.status).withValues(alpha: 0.3),
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  milestone.status ?? 'N/A',
-                  style: textStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
+    return Consumer<MentorProvider>(
+      builder: (context, mentorProvider, child) {
+        return Container(
+          margin: EdgeInsets.only(bottom: 12),
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.white, Color(0xFFF8F9FC)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: Offset(0, 4),
               ),
             ],
           ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    "🎯",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      milestone.name ?? 'Unnamed Milestone',
+                      style: textStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (milestone.status != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 24, top: 4),
+                  child: milestone.status?.toLowerCase() == 'approved'
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.verified,
+                                size: 14,
+                                color: Colors.blue.shade700,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Approved',
+                                style: textStyle(
+                                  color: Colors.blue.shade700,
+                                  fontSize: 12,
+                                  fontFamily: AppFonts.interMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : milestone.status?.toLowerCase() == 'rejected'
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade100,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.cancel,
+                                    size: 14,
+                                    color: Colors.red.shade700,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Rejected',
+                                    style: textStyle(
+                                      color: Colors.red.shade700,
+                                      fontSize: 12,
+                                      fontFamily: AppFonts.interMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : milestone.status?.toLowerCase() == 'completed'
+                              ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.shade100,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.pending_actions,
+                                            size: 14,
+                                            color: Colors.orange.shade700,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Pending Approval',
+                                            style: textStyle(
+                                              color: Colors.orange.shade700,
+                                              fontSize: 12,
+                                              fontFamily: AppFonts.interMedium,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: ElevatedButton.icon(
+                                            onPressed: mentorProvider.isApprovingMilestone(milestone.id ?? '')
+                                                ? null
+                                                : () async {
+                                                    final approved = await _showApproveDialog(
+                                                      context,
+                                                      mentorProvider,
+                                                      milestone,
+                                                    );
+                                                    if (approved == true) {
+                                                      updateMilestoneStatus(milestone.id ?? '', 'approved');
+                                                    }
+                                                  },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.green,
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 8,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                            ),
+                                            icon: mentorProvider.isApprovingMilestone(
+                                                    milestone.id ?? '')
+                                                ? const SizedBox(
+                                                    width: 16,
+                                                    height: 16,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<Color>(
+                                                        Colors.white,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const Icon(
+                                                    Icons.check,
+                                                    size: 16,
+                                                    color: Colors.white,
+                                                  ),
+                                            label: Text(
+                                              'Approve',
+                                              style: textStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontFamily: AppFonts.interMedium,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: ElevatedButton.icon(
+                                            onPressed: mentorProvider.isApprovingMilestone(milestone.id ?? '')
+                                                ? null
+                                                : () async {
+                                                    final rejected = await _showRejectDialog(
+                                                      context,
+                                                      mentorProvider,
+                                                      milestone,
+                                                    );
+                                                    if (rejected == true) {
+                                                      updateMilestoneStatus(milestone.id ?? '', 'rejected');
+                                                    }
+                                                  },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red,
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 8,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                            ),
+                                            icon: mentorProvider.isApprovingMilestone(
+                                                    milestone.id ?? '')
+                                                ? const SizedBox(
+                                                    width: 16,
+                                                    height: 16,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<Color>(
+                                                        Colors.white,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const Icon(
+                                                    Icons.close,
+                                                    size: 16,
+                                                    color: Colors.white,
+                                                  ),
+                                            label: Text(
+                                              'Reject',
+                                              style: textStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontFamily: AppFonts.interMedium,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                )
+                              : Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    milestone.status ?? "N/A",
+                                    style: textStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 12,
+                                      fontFamily: AppFonts.interMedium,
+                                    ),
+                                  ),
+                                ),
+                ),
           hSpace(height: 8),
           if (milestone.dueDate != null)
             Row(
@@ -464,6 +703,252 @@ class ProjectDetails extends StatelessWidget {
               ),
             )),
           ],
+        ],
+      ),
+        );
+      },
+    );
+  }
+
+  Future<bool?> _showApproveDialog(
+    BuildContext context,
+    MentorProvider mentorProvider,
+    Milestone milestone,
+  ) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.check_circle_outline,
+              color: Colors.green.shade700,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Approve Milestone',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to approve this milestone?',
+              style: textStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.grey.shade200,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Text(
+                    "🎯",
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      milestone.name ?? "Milestone",
+                      style: textStyle(
+                        fontFamily: AppFonts.interMedium,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: textStyle(
+                color: Colors.grey.shade700,
+                fontFamily: AppFonts.interMedium,
+              ),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              if (projectData?.id != null && milestone.id != null) {
+                Navigator.of(ctx).pop(true);
+                await mentorProvider.approveOrRejectMilestone(
+                  context: context,
+                  projectId: projectData!.id!,
+                  milestoneId: milestone.id!,
+                  status: "approved",
+                );
+              } else {
+                Navigator.of(ctx).pop(false);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            icon: const Icon(
+              Icons.check,
+              size: 18,
+              color: Colors.white,
+            ),
+            label: Text(
+              'Approve',
+              style: textStyle(
+                color: Colors.white,
+                fontFamily: AppFonts.interMedium,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> _showRejectDialog(
+    BuildContext context,
+    MentorProvider mentorProvider,
+    Milestone milestone,
+  ) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.cancel_outlined,
+              color: Colors.red.shade700,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Reject Milestone',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to reject this milestone?',
+              style: textStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.grey.shade200,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Text(
+                    "🎯",
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      milestone.name ?? "Milestone",
+                      style: textStyle(
+                        fontFamily: AppFonts.interMedium,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: textStyle(
+                color: Colors.grey.shade700,
+                fontFamily: AppFonts.interMedium,
+              ),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              if (projectData?.id != null && milestone.id != null) {
+                Navigator.of(ctx).pop(true);
+                await mentorProvider.approveOrRejectMilestone(
+                  context: context,
+                  projectId: projectData!.id!,
+                  milestoneId: milestone.id!,
+                  status: "rejected",
+                );
+              } else {
+                Navigator.of(ctx).pop(false);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            icon: const Icon(
+              Icons.close,
+              size: 18,
+              color: Colors.white,
+            ),
+            label: Text(
+              'Reject',
+              style: textStyle(
+                color: Colors.white,
+                fontFamily: AppFonts.interMedium,
+              ),
+            ),
+          ),
         ],
       ),
     );

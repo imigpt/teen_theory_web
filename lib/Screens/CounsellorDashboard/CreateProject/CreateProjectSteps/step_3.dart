@@ -272,6 +272,7 @@ class _Step3State extends State<Step3> {
         ),
         const SizedBox(height: 8),
         TextField(
+          controller: TextEditingController(text: milestone.name),
           decoration: InputDecoration(
             hintText: 'eg., Research Phase, Essay Draft',
             hintStyle: const TextStyle(color: Color(0xFFBDBDBD), fontSize: 14),
@@ -387,6 +388,7 @@ class _Step3State extends State<Step3> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
+                    controller: TextEditingController(text: milestone.weight),
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       hintText: '30',

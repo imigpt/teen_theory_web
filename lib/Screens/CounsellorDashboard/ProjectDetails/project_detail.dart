@@ -7,6 +7,7 @@ import 'package:teen_theory/Models/CounsellorModels/all_my_project_model.dart';
 import 'package:teen_theory/Providers/CounsellorProvider/counsellor_provider.dart';
 import 'package:teen_theory/Resources/colors.dart';
 import 'package:teen_theory/Resources/fonts.dart';
+import 'package:teen_theory/Screens/CounsellorDashboard/CreateProject/create_project_main.dart';
 import 'package:teen_theory/Services/apis.dart';
 import 'package:teen_theory/Utils/helper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -175,35 +176,58 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         ),
                       )
                     else
-                      Row(
+                      Column(
                         children: [
-                          Flexible(
+                          // Edit Button
+                          SizedBox(
+                            width: double.infinity,
                             child: CustomButton(
                               fontsize: 14,
-                              title: "Completed",
+                              bgColor: const Color(0xFF667EEA),
+                              title: "Edit Project",
                               onTap: () {
-                                if (!isCompleting) {
-                                  counsellorProvider.completeProjectStatus(context, projects);
-                                }
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => CreateProjectMain(
+                                      projectToEdit: projects,
+                                    ),
+                                  ),
+                                );
                               },
-                              isLoading: isCompleting,
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          Consumer<CounsellorProvider>(
-                            builder: (context, pvd, child) {
-                            return Flexible(
-                            child: CustomButton(
-                              isLoading: pvd.deleteProjectLoading,
-                              bgColor: Colors.red,
-                              fontsize: 14,
-                              title: "delete",
-                              onTap: () {
-                                pvd.deleteProjectApiTap(context, project_id: widget.projects.id!);
-                              },
-                            ),
-                          );
-                          }),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: CustomButton(
+                                  fontsize: 14,
+                                  title: "Completed",
+                                  onTap: () {
+                                    if (!isCompleting) {
+                                      counsellorProvider.completeProjectStatus(context, projects);
+                                    }
+                                  },
+                                  isLoading: isCompleting,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Consumer<CounsellorProvider>(
+                                builder: (context, pvd, child) {
+                                return Flexible(
+                                child: CustomButton(
+                                  isLoading: pvd.deleteProjectLoading,
+                                  bgColor: Colors.red,
+                                  fontsize: 14,
+                                  title: "delete",
+                                  onTap: () {
+                                    pvd.deleteProjectApiTap(context, project_id: widget.projects.id!);
+                                  },
+                                ),
+                              );
+                              }),
+                            ],
+                          ),
                         ],
                       ),
                   ],
