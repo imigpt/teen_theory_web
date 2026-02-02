@@ -61,6 +61,8 @@ class Data {
     dynamic mentor;
     List<dynamic>? totalProjects;
     List<dynamic>? completedProject;
+    String? start_shift_time;
+    String? end_shift_time;
     DateTime? createdAt;
     bool? isActive;
     Data? child;
@@ -95,6 +97,8 @@ class Data {
         this.mentor,
         this.totalProjects,
         this.completedProject,
+        this.start_shift_time,
+        this.end_shift_time,
         this.createdAt,
         this.isActive,
         this.child,
@@ -130,6 +134,8 @@ class Data {
         mentor: json["mentor"],
         totalProjects: json["total_projects"] == null ? [] : List<dynamic>.from(json["total_projects"]!.map((x) => x)),
         completedProject: json["completed_project"] == null ? [] : List<dynamic>.from(json["completed_project"]!.map((x) => x)),
+        start_shift_time: json["start_shift_time"],
+        end_shift_time: json["end_shift_time"],
         createdAt: json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
         isActive: json["is_active"],
         child: json["child"] == null || json["child"] is! Map<String, dynamic> ? null : Data.fromJson(json["child"]),
@@ -165,6 +171,8 @@ class Data {
         "mentor": mentor,
         "total_projects": totalProjects == null ? [] : List<dynamic>.from(totalProjects!.map((x) => x)),
         "completed_project": completedProject == null ? [] : List<dynamic>.from(completedProject!.map((x) => x)),
+        "start_shift_time": start_shift_time,
+        "end_shift_time": end_shift_time,
         "created_at": createdAt?.toIso8601String(),
         "is_active": isActive,
         "child": child?.toJson(),
@@ -203,6 +211,7 @@ class AssignedProject {
     String? projectDescription;
     String? status;
     String? createdByEmail;
+    CreatedByUser? createdByUser;
     List<AssignedStudent>? assignedStudent;
     AssignedMentor? assignedMentor;
     String? projectCounsellor;
@@ -219,6 +228,7 @@ class AssignedProject {
         this.projectDescription,
         this.status,
         this.createdByEmail,
+        this.createdByUser,
         this.assignedStudent,
         this.assignedMentor,
         this.projectCounsellor,
@@ -236,6 +246,7 @@ class AssignedProject {
         projectDescription: json["project_description"],
         status: json["status"],
         createdByEmail: json["created_by_email"],
+        createdByUser: json["created_by_user"] == null ? null : CreatedByUser.fromJson(json["created_by_user"]),
         assignedStudent: json["assigned_student"] == null ? [] : List<AssignedStudent>.from(json["assigned_student"]!.map((x) => AssignedStudent.fromJson(x))),
         assignedMentor: json["assigned_mentor"] == null ? null : AssignedMentor.fromJson(json["assigned_mentor"]),
         projectCounsellor: json["project_counsellor"],
@@ -264,6 +275,46 @@ class AssignedProject {
     };
 }
 
+class CreatedByUser {
+  int? id;
+  String? full_name;
+  String? email;
+  String? profile_photo;
+  String? user_role;
+  String? start_shift_time;
+  String? end_shift_time;
+
+  CreatedByUser({
+    this.id,
+    this.full_name,
+    this.email,
+    this.profile_photo,
+    this.user_role,
+    this.start_shift_time,
+    this.end_shift_time,
+  });
+
+  factory CreatedByUser.fromJson(Map<String, dynamic> json) => CreatedByUser(
+    id: json["id"],
+    full_name: json["full_name"],
+    email: json["email"],
+    profile_photo: json["profile_photo"],
+    user_role: json["user_role"],
+    start_shift_time: json["start_shift_time"],
+    end_shift_time: json["end_shift_time"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "full_name": full_name,
+    "email": email,
+    "profile_photo": profile_photo,
+    "user_role": user_role,
+    "start_shift_time": start_shift_time,
+    "end_shift_time": end_shift_time,
+  };
+}
+
 class AssignedMentor {
     String? id;
     String? name;
@@ -271,6 +322,8 @@ class AssignedMentor {
     String? subtitle;
     String? rating;
     String? reviews;
+    String? start_shift_time;
+    String? end_shift_time;
 
     AssignedMentor({
         this.id,
@@ -279,6 +332,8 @@ class AssignedMentor {
         this.subtitle,
         this.rating,
         this.reviews,
+        this.start_shift_time,
+        this.end_shift_time
     });
 
     factory AssignedMentor.fromJson(Map<String, dynamic> json) => AssignedMentor(
@@ -288,6 +343,8 @@ class AssignedMentor {
         subtitle: json["subtitle"],
         rating: json["rating"],
         reviews: json["reviews"],
+        start_shift_time: json["start_shift_time"],
+        end_shift_time: json["end_shift_time"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -297,6 +354,8 @@ class AssignedMentor {
         "subtitle": subtitle,
         "rating": rating,
         "reviews": reviews,
+        "start_shift_time": start_shift_time,
+        "end_shift_time": end_shift_time,
     };
 }
 

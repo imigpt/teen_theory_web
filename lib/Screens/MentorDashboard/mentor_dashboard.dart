@@ -7,7 +7,6 @@ import 'package:teen_theory/Providers/MentorProvider/mentor_profile_provider.dar
 import 'package:teen_theory/Providers/MentorProvider/mentor_provider.dart';
 import 'package:teen_theory/Providers/StudentProviders/detail_project_provider.dart';
 import 'package:teen_theory/Resources/assets.dart';
-import 'package:teen_theory/Resources/colors.dart';
 import 'package:teen_theory/Screens/MentorDashboard/MentorMeeting/mentor_meeting.dart';
 import 'package:teen_theory/Screens/MentorDashboard/Profile/mentor_profile.dart';
 import 'package:teen_theory/Screens/MentorDashboard/Projects/project_details.dart';

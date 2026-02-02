@@ -37,6 +37,13 @@ class MentorProfileProvider with ChangeNotifier {
   bool _isUpdating = false;
   bool get isUpdating => _isUpdating;
 
+  // Shift Time Fields
+  TimeOfDay? _startShiftTime;
+  TimeOfDay? get startShiftTime => _startShiftTime;
+
+  TimeOfDay? _endShiftTime;
+  TimeOfDay? get endShiftTime => _endShiftTime;
+
   final ImagePicker _picker = ImagePicker();
 
   void setUpdating(bool value) {
@@ -52,7 +59,37 @@ class MentorProfileProvider with ChangeNotifier {
       phoneCtrl.text = data.phoneNumber ?? '';
       aboutMeCtrl.text = data.aboutMe?.toString() ?? '';
       _expertise = List<String>.from(data.expertise ?? []);
+      // Parse shift times from API
+      _startShiftTime = _parseTimeString(data.start_shift_time) ?? TimeOfDay(hour: 9, minute: 0);
+      _endShiftTime = _parseTimeString(data.end_shift_time) ?? TimeOfDay(hour: 17, minute: 0);
       notifyListeners();
+    }
+  }
+
+  // Parse time string from API (e.g., "12:47 PM") to TimeOfDay
+  TimeOfDay? _parseTimeString(String? timeString) {
+    if (timeString == null || timeString.isEmpty) return null;
+    try {
+      final parts = timeString.split(' ');
+      if (parts.length != 2) return null;
+      
+      final timeParts = parts[0].split(':');
+      if (timeParts.length != 2) return null;
+      
+      int hour = int.parse(timeParts[0]);
+      int minute = int.parse(timeParts[1]);
+      final period = parts[1].toUpperCase();
+      
+      if (period == 'PM' && hour != 12) {
+        hour += 12;
+      } else if (period == 'AM' && hour == 12) {
+        hour = 0;
+      }
+      
+      return TimeOfDay(hour: hour, minute: minute);
+    } catch (e) {
+      AppLogger.error(message: 'Error parsing time string: $e');
+      return null;
     }
   }
 
@@ -88,6 +125,93 @@ class MentorProfileProvider with ChangeNotifier {
     }
   }
 
+  // Set start shift time
+  void setStartShiftTime(TimeOfDay time) {
+    _startShiftTime = time;
+    notifyListeners();
+  }
+
+  // Set end shift time
+  void setEndShiftTime(TimeOfDay time) {
+    _endShiftTime = time;
+    notifyListeners();
+  }
+
+  // Format TimeOfDay to string for display (24-hour format)
+  String formatTimeOfDay(TimeOfDay? time) {
+    if (time == null) return 'Not set';
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  // Format TimeOfDay to API format (12-hour with AM/PM)
+  String _formatTimeForApi(TimeOfDay time) {
+    int hour = time.hour;
+    String period = 'AM';
+    
+    if (hour >= 12) {
+      period = 'PM';
+      if (hour > 12) hour -= 12;
+    }
+    if (hour == 0) hour = 12;
+    
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute $period';
+  }
+
+  // Update shift time via API
+  Future<void> updateShiftTimeApiTap(BuildContext context) async {
+    final hasConnection = await ConnectionDetector.connectCheck();
+    if (hasConnection) {
+      await updateShiftTimeApiCall(context);
+    } else {
+      showToast("No Internet Connection", type: toastType.error);
+    }
+  }
+
+  Future<void> updateShiftTimeApiCall(BuildContext context) async {
+    if (_startShiftTime == null || _endShiftTime == null) {
+      showToast("Please select both start and end shift times", type: toastType.error);
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      Map<String, dynamic> body = {
+        "start_shift_time": _formatTimeForApi(_startShiftTime!),
+        "end_shift_time": _formatTimeForApi(_endShiftTime!),
+      };
+
+      await DioClient.updateShiftTime(
+        body: body,
+        onSuccess: (response) {
+          if (response.success == true) {
+            _mentorProfileData = response;
+            showToast("Shift time updated successfully", type: toastType.success);
+            setUpdating(false);
+            notifyListeners();
+          } else {
+            showToast(response.message ?? "Failed to update shift time", type: toastType.error);
+            setUpdating(false);
+            notifyListeners();
+          }
+        },
+        onError: (error) {
+          AppLogger.error(message: "updateShiftTimeApiCall onError: $error");
+          showToast("Failed to update shift time", type: toastType.error);
+          setUpdating(false);
+          notifyListeners();
+        },
+      );
+    } catch (e) {
+      AppLogger.error(message: "updateShiftTimeApiCall Error: $e");
+      showToast("Failed to update shift time", type: toastType.error);
+      setUpdating(false);
+      notifyListeners();
+    }
+  }
+
   // Clear edit form
   void clearEditForm() {
     fullNameCtrl.clear();
@@ -96,6 +220,8 @@ class MentorProfileProvider with ChangeNotifier {
     expertiseInputCtrl.clear();
     _profileImage = null;
     _expertise.clear();
+    _startShiftTime = null;
+    _endShiftTime = null;
     notifyListeners();
   }
 

@@ -1419,4 +1419,49 @@ class DioClient {
       rethrow;
     }
   }
+
+  //................UPDATE SHIFT TIME API.......................//
+
+  static Future<ProfileModel> updateShiftTime({
+    required Map<String, dynamic> body,
+    required Function(ProfileModel response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "API: ${Apis.updateShiftTime}");
+      AppLogger.debug(message: "Token: $token");
+      AppLogger.debug(message: "Body: $body");
+
+      Response response = await dio.put(
+        Apis.updateShiftTime,
+        data: body,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      AppLogger.debug(message: "response: $response");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ProfileModel profileModel = ProfileModel.fromJson(response.data);
+        onSuccess(profileModel);
+        return profileModel;
+      } else {
+        AppLogger.error(
+            message: 'updateShiftTime - statusCode: ${response.statusCode}');
+        onError('Failed to update shift time');
+        return ProfileModel();
+      }
+    } catch (e) {
+      AppLogger.error(message: "updateShiftTime error: $e");
+      if (e is DioException) {
+        onError(e.response?.data?['detail'] ?? e.message ?? "Failed to update shift time");
+      } else {
+        onError(e.toString());
+      }
+      return ProfileModel();
+    }
+  }
 }

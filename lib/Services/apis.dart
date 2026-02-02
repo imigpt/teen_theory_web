@@ -8,6 +8,7 @@ class Apis {
   static const String changePassword = "$baseUrl/users/change_password";
   static const String profile = "$baseUrl/users/me";
   static const String updateProfile = "$baseUrl/users/update";
+  static const String updateShiftTime = "$baseUrl/users/update_shift_time";
   static const String createProject = "$baseUrl/projects/create";
   static const String allStudents = "$baseUrl/users/all_students";
   static const String allMentors = "$baseUrl/users/all_mentors";

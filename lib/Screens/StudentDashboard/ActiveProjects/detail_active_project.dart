@@ -1042,6 +1042,14 @@ class _TasksSection extends StatelessWidget {
                                                         final isBooked = pvd
                                                             .bookedTimeSlots
                                                             .contains(slot);
+                                                        final isMentorAvailable = pvd.isMentorAvailable(
+                                                          slot,
+                                                          projectDetails.assignedMentor,
+                                                        );
+                                                        final isCounsellorAvailable = pvd.isCounsellorAvailable(
+                                                          slot,
+                                                          projectDetails.createdByUser,
+                                                        );
                                                         return DropdownMenuItem<
                                                           String
                                                         >(
@@ -1052,51 +1060,113 @@ class _TasksSection extends StatelessWidget {
                                                                 MainAxisAlignment
                                                                     .spaceBetween,
                                                             children: [
-                                                              Text(
-                                                                slot,
-                                                                style: TextStyle(
-                                                                  fontSize: 14,
-                                                                  color:
-                                                                      isBooked
-                                                                      ? Colors
-                                                                            .grey
-                                                                            .shade400
-                                                                      : Colors
-                                                                            .black,
+                                                              Flexible(
+                                                                child: Text(
+                                                                  slot,
+                                                                  style: TextStyle(
+                                                                    fontSize: 14,
+                                                                    color:
+                                                                        isBooked
+                                                                        ? Colors
+                                                                              .grey
+                                                                              .shade400
+                                                                        : Colors
+                                                                              .black,
+                                                                  ),
                                                                 ),
                                                               ),
-                                                              if (isBooked)
-                                                                Container(
-                                                                  padding:
-                                                                      const EdgeInsets.symmetric(
-                                                                        horizontal:
-                                                                            6,
-                                                                        vertical:
-                                                                            2,
+                                                              Row(
+                                                                children: [
+                                                                  if (isMentorAvailable && !isBooked)
+                                                                    Container(
+                                                                      padding:
+                                                                          const EdgeInsets.symmetric(
+                                                                            horizontal: 6,
+                                                                            vertical: 2,
+                                                                          ),
+                                                                      margin: const EdgeInsets.only(right: 4),
+                                                                      decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(4),
                                                                       ),
-                                                                  decoration: BoxDecoration(
-                                                                    color: Colors
-                                                                        .red
-                                                                        .shade100,
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                          4,
+                                                                      child: Text(
+                                                                        'Mentor',
+                                                                        style: TextStyle(
+                                                                          fontSize: 10,
+                                                                          fontWeight:
+                                                                              FontWeight
+                                                                                  .w600,
+                                                                          color: Colors
+                                                                              .green
+                                                                              .shade700,
                                                                         ),
-                                                                  ),
-                                                                  child: Text(
-                                                                    'Booked',
-                                                                    style: TextStyle(
-                                                                      fontSize:
-                                                                          10,
-                                                                      color: Colors
-                                                                          .red
-                                                                          .shade700,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w600,
+                                                                      ),
                                                                     ),
-                                                                  ),
-                                                                ),
+                                                                  if (isCounsellorAvailable && !isBooked)
+                                                                    Container(
+                                                                      padding:
+                                                                          const EdgeInsets.symmetric(
+                                                                            horizontal: 6,
+                                                                            vertical: 2,
+                                                                          ),
+                                                                      margin: const EdgeInsets.only(right: 4),
+                                                                      decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .blue
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(4),
+                                                                      ),
+                                                                      child: Text(
+                                                                        'Counsellor',
+                                                                        style: TextStyle(
+                                                                          fontSize: 10,
+                                                                          fontWeight:
+                                                                              FontWeight
+                                                                                  .w600,
+                                                                          color: Colors
+                                                                              .blue
+                                                                              .shade700,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  if (isBooked)
+                                                                    Container(
+                                                                      padding:
+                                                                          const EdgeInsets.symmetric(
+                                                                            horizontal:
+                                                                                6,
+                                                                            vertical:
+                                                                                2,
+                                                                          ),
+                                                                      decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .red
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(
+                                                                              4,
+                                                                            ),
+                                                                      ),
+                                                                      child: Text(
+                                                                        'Booked',
+                                                                        style: TextStyle(
+                                                                          fontSize:
+                                                                              10,
+                                                                          color: Colors
+                                                                              .red
+                                                                              .shade700,
+                                                                          fontWeight:
+                                                                              FontWeight
+                                                                                  .w600,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                ],
+                                                              ),
                                                             ],
                                                           ),
                                                         );

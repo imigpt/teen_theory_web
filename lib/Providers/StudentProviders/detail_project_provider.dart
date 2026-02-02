@@ -590,6 +590,168 @@ class DetailProjectProvider extends ChangeNotifier {
     return '$hour:$minute $period';
   }
 
+  // Check if a time slot is within mentor's shift time
+  bool isMentorAvailable(String timeSlot, AssignedMentor? mentor) {
+    if (mentor == null) {
+      print('DEBUG: Mentor is null');
+      return false;
+    }
+
+    print('DEBUG: Checking slot: $timeSlot');
+    print('DEBUG: Mentor data: ${mentor.name}, ${mentor.email}');
+    print('DEBUG: Mentor start_shift_time: ${mentor.start_shift_time}');
+    print('DEBUG: Mentor end_shift_time: ${mentor.end_shift_time}');
+
+    if (mentor.start_shift_time == null || mentor.end_shift_time == null) {
+      print('DEBUG: Shift times are null');
+      return false;
+    }
+
+    if (mentor.start_shift_time!.isEmpty || mentor.end_shift_time!.isEmpty) {
+      print('DEBUG: Shift times are empty strings');
+      return false;
+    }
+
+    try {
+      // Parse the time slot (e.g., "9:00 AM - 9:30 AM")
+      final parts = timeSlot.split(' - ');
+      if (parts.length != 2) {
+        print('DEBUG: Invalid slot format - parts: ${parts.length}');
+        return false;
+      }
+
+      final slotStart = _parseTimeString(parts[0].trim());
+      final slotEnd = _parseTimeString(parts[1].trim());
+      final mentorStart = _parseTimeString(mentor.start_shift_time!);
+      final mentorEnd = _parseTimeString(mentor.end_shift_time!);
+
+      print('DEBUG: Parsed slot start: ${slotStart?.hour}:${slotStart?.minute}');
+      print('DEBUG: Parsed slot end: ${slotEnd?.hour}:${slotEnd?.minute}');
+      print('DEBUG: Parsed mentor start: ${mentorStart?.hour}:${mentorStart?.minute}');
+      print('DEBUG: Parsed mentor end: ${mentorEnd?.hour}:${mentorEnd?.minute}');
+
+      if (slotStart == null || slotEnd == null || mentorStart == null || mentorEnd == null) {
+        print('DEBUG: Failed to parse times');
+        return false;
+      }
+
+      // Convert to minutes for easier comparison
+      final slotStartMinutes = slotStart.hour * 60 + slotStart.minute;
+      final slotEndMinutes = slotEnd.hour * 60 + slotEnd.minute;
+      final mentorStartMinutes = mentorStart.hour * 60 + mentorStart.minute;
+      final mentorEndMinutes = mentorEnd.hour * 60 + mentorEnd.minute;
+
+      print('DEBUG: Slot minutes: $slotStartMinutes - $slotEndMinutes');
+      print('DEBUG: Mentor minutes: $mentorStartMinutes - $mentorEndMinutes');
+
+      // Check if slot overlaps with mentor's shift time
+      final isAvailable = slotStartMinutes >= mentorStartMinutes &&
+          slotEndMinutes <= mentorEndMinutes;
+      
+      print('DEBUG: Is available: $isAvailable');
+      print('---');
+      return isAvailable;
+    } catch (e) {
+      AppLogger.error(message: 'Error checking mentor availability: $e');
+      print('DEBUG: Exception: $e');
+      return false;
+    }
+  }
+
+  // Check if a time slot is within counsellor's shift time
+  bool isCounsellorAvailable(String timeSlot, CreatedByUser? counsellor) {
+    if (counsellor == null) {
+      print('DEBUG: Counsellor is null');
+      return false;
+    }
+
+    print('DEBUG: Checking counsellor for slot: $timeSlot');
+    print('DEBUG: Counsellor data: ${counsellor.full_name}, ${counsellor.email}');
+    print('DEBUG: Counsellor start_shift_time: ${counsellor.start_shift_time}');
+    print('DEBUG: Counsellor end_shift_time: ${counsellor.end_shift_time}');
+
+    if (counsellor.start_shift_time == null || counsellor.end_shift_time == null) {
+      print('DEBUG: Counsellor shift times are null');
+      return false;
+    }
+
+    if (counsellor.start_shift_time!.isEmpty || counsellor.end_shift_time!.isEmpty) {
+      print('DEBUG: Counsellor shift times are empty strings');
+      return false;
+    }
+
+    try {
+      // Parse the time slot (e.g., "9:00 AM - 9:30 AM")
+      final parts = timeSlot.split(' - ');
+      if (parts.length != 2) {
+        print('DEBUG: Invalid slot format - parts: ${parts.length}');
+        return false;
+      }
+
+      final slotStart = _parseTimeString(parts[0].trim());
+      final slotEnd = _parseTimeString(parts[1].trim());
+      final counsellorStart = _parseTimeString(counsellor.start_shift_time!);
+      final counsellorEnd = _parseTimeString(counsellor.end_shift_time!);
+
+      print('DEBUG: Parsed slot start: ${slotStart?.hour}:${slotStart?.minute}');
+      print('DEBUG: Parsed slot end: ${slotEnd?.hour}:${slotEnd?.minute}');
+      print('DEBUG: Parsed counsellor start: ${counsellorStart?.hour}:${counsellorStart?.minute}');
+      print('DEBUG: Parsed counsellor end: ${counsellorEnd?.hour}:${counsellorEnd?.minute}');
+
+      if (slotStart == null || slotEnd == null || counsellorStart == null || counsellorEnd == null) {
+        print('DEBUG: Failed to parse counsellor times');
+        return false;
+      }
+
+      // Convert to minutes for easier comparison
+      final slotStartMinutes = slotStart.hour * 60 + slotStart.minute;
+      final slotEndMinutes = slotEnd.hour * 60 + slotEnd.minute;
+      final counsellorStartMinutes = counsellorStart.hour * 60 + counsellorStart.minute;
+      final counsellorEndMinutes = counsellorEnd.hour * 60 + counsellorEnd.minute;
+
+      print('DEBUG: Slot minutes: $slotStartMinutes - $slotEndMinutes');
+      print('DEBUG: Counsellor minutes: $counsellorStartMinutes - $counsellorEndMinutes');
+
+      // Check if slot overlaps with counsellor's shift time
+      final isAvailable = slotStartMinutes >= counsellorStartMinutes &&
+          slotEndMinutes <= counsellorEndMinutes;
+      
+      print('DEBUG: Counsellor is available: $isAvailable');
+      print('---');
+      return isAvailable;
+    } catch (e) {
+      AppLogger.error(message: 'Error checking counsellor availability: $e');
+      print('DEBUG: Counsellor Exception: $e');
+      return false;
+    }
+  }
+
+  // Parse time string (e.g., "12:47 PM") to TimeOfDay
+  TimeOfDay? _parseTimeString(String timeString) {
+    try {
+      final parts = timeString.trim().split(' ');
+      if (parts.length != 2) return null;
+
+      final timeParts = parts[0].split(':');
+      if (timeParts.length != 2) return null;
+
+      int hour = int.parse(timeParts[0]);
+      int minute = int.parse(timeParts[1]);
+      final period = parts[1].toUpperCase();
+
+      if (period == 'PM' && hour != 12) {
+        hour += 12;
+      } else if (period == 'AM' && hour == 12) {
+        hour = 0;
+      }
+
+      return TimeOfDay(hour: hour, minute: minute);
+    } catch (e) {
+      AppLogger.error(message: 'Error parsing time string: $e');
+      return null;
+    }
+  }
+
   // Fetch all meetings and extract booked time slots for today
   Future<void> fetchAllMeetings() async {
     if (_loadingMeetings) return;

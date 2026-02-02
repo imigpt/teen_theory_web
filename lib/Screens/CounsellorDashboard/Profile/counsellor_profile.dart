@@ -231,6 +231,96 @@ class _CounsellorProfilePageState extends State<CounsellorProfilePage> {
 
               hSpace(height: 16),
 
+              // Shift Time Card
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.white, Color(0xFFF8F9FC)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text('⏰', style: TextStyle(fontSize: 18)),
+                          SizedBox(width: 8),
+                          Text(
+                            'Shift Timing',
+                            style: textStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      hSpace(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Start Time',
+                                  style: textStyle(fontSize: 12, color: Colors.black45),
+                                ),
+                                hSpace(height: 4),
+                                Text(
+                                  profileData?.start_shift_time ?? 'Not set',
+                                  style: textStyle(
+                                    color: Colors.black87,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            height: 30,
+                            width: 1,
+                            color: Colors.grey.shade300,
+                          ),
+                          wSpace(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'End Time',
+                                  style: textStyle(fontSize: 12, color: Colors.black45),
+                                ),
+                                hSpace(height: 4),
+                                Text(
+                                  profileData?.end_shift_time ?? 'Not set',
+                                  style: textStyle(
+                                    color: Colors.black87,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              hSpace(height: 16),
+
               // Specialities / Tags
               Text(
                 'Specialities',

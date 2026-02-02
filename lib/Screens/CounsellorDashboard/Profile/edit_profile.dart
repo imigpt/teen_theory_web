@@ -232,14 +232,123 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                 hSpace(height: 20),
 
+                // Shift Time Section
+                Text(
+                  'Shift Timing',
+                  style: textStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                hSpace(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Start Time',
+                            style: textStyle(fontSize: 12, color: Colors.black54),
+                          ),
+                          hSpace(height: 6),
+                          GestureDetector(
+                            onTap: () async {
+                              final TimeOfDay? picked = await showTimePicker(
+                                context: context,
+                                initialTime: pvd.startShiftTime ?? TimeOfDay(hour: 9, minute: 0),
+                              );
+                              if (picked != null) {
+                                pvd.setStartShiftTime(picked);
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    pvd.startShiftTime != null
+                                        ? pvd.formatTimeOfDay(pvd.startShiftTime)
+                                        : 'Select',
+                                    style: textStyle(
+                                      color: pvd.startShiftTime != null
+                                          ? Colors.black87
+                                          : Colors.black45,
+                                    ),
+                                  ),
+                                  Icon(Icons.access_time, color: AppColors.blue, size: 20),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    wSpace(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'End Time',
+                            style: textStyle(fontSize: 12, color: Colors.black54),
+                          ),
+                          hSpace(height: 6),
+                          GestureDetector(
+                            onTap: () async {
+                              final TimeOfDay? picked = await showTimePicker(
+                                context: context,
+                                initialTime: pvd.endShiftTime ?? TimeOfDay(hour: 17, minute: 0),
+                              );
+                              if (picked != null) {
+                                pvd.setEndShiftTime(picked);
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    pvd.endShiftTime != null
+                                        ? pvd.formatTimeOfDay(pvd.endShiftTime)
+                                        : 'Select',
+                                    style: textStyle(
+                                      color: pvd.endShiftTime != null
+                                          ? Colors.black87
+                                          : Colors.black45,
+                                    ),
+                                  ),
+                                  Icon(Icons.access_time, color: AppColors.blue, size: 20),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                hSpace(height: 20),
+
                 SizedBox(
                   width: double.infinity,
                   child: CustomButton(
                     isLoading: pvd.isBtnLoading,
-                    onTap: () {
+                    onTap: () async {
                       print("Achievements: ${pvd.achievements}");
                       if (_formKey.currentState?.validate() ?? false) {
                         pvd.updateProfileApiTap(context);
+                        await pvd.updateShiftTimeApiTap(context);
                       }
                     },
                     title: "Save")
