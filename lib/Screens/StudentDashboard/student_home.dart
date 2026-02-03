@@ -13,6 +13,7 @@ import 'package:teen_theory/Screens/StudentDashboard/ActiveProjects/active_proje
 import 'package:teen_theory/Screens/StudentDashboard/Profile/student_profile.dart';
 import 'package:teen_theory/Screens/StudentDashboard/StudentNotification/student_notification.dart';
 import 'package:teen_theory/Services/apis.dart';
+import 'package:teen_theory/Services/dio_client.dart';
 import 'package:teen_theory/Shimmer/StudentShimmer/active_project_shimmer.dart';
 import 'package:teen_theory/Shimmer/StudentShimmer/appbar_shimmer.dart';
 import 'package:teen_theory/Utils/helper.dart';
@@ -110,9 +111,32 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
                                   ),
                                 ],
                               ),
-                              child:data?.profilePhoto == null ? Center(
-                                child: Text('👩‍🎓', style: TextStyle(fontSize: 26)),
-                              ) : CircleAvatar(backgroundImage: NetworkImage("${Apis.baseUrl}${data!.profilePhoto}")),
+                              child: data?.profilePhoto == null 
+                                ? Center(
+                                    child: Text('👩‍🎓', style: TextStyle(fontSize: 26)),
+                                  )
+                                : ClipOval(
+                                    child: Image.network(
+                                      "${Apis.baseUrl}${data!.profilePhoto}",
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Center(
+                                          child: Text('👩‍🎓', style: TextStyle(fontSize: 26)),
+                                        );
+                                      },
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                             ),
                           ),
                           Column(
@@ -180,12 +204,18 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
                               final bool showBadge = loading || count > 0;
         
                               return InkWell(
-                                onTap: () {
-                                  Navigator.of(context).push(
+                                splashColor: Colors.transparent,
+                                highlightColor: Colors.transparent,
+                                onTap: () async {
+                                  await Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) => const StudentNotificationScreen(),
                                     ),
                                   );
+                                  // Mark notifications as read after viewing
+                                  if (mounted) {
+                                    notiProvider.clearNotifications();
+                                  }
                                 },
                                 child: Container(
                                   width: 44,
@@ -939,7 +969,7 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text('My Meetings'),
+                                      Text('Counsellor Meetings'),
                                       if (participantMeetings.isNotEmpty) ...[
                                         wSpace(width: 6),
                                         Container(
@@ -961,7 +991,7 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text('Counsellor Meeting'),
+                                      Text('My Meeting'),
                                       if (counsellorMeetings.isNotEmpty) ...[
                                         wSpace(width: 6),
                                         Container(
@@ -1139,6 +1169,54 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
                           ),
                         ),
                       ),
+                    wSpace(width: 8),
+                    InkWell(
+                      onTap: () async {
+                        // Show confirmation dialog
+                        bool? confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text('Delete Meeting'),
+                            content: Text('Are you sure you want to delete this meeting?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: Text('Delete', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true && meeting.id != null) {
+                          await DioClient.deleteMeetingApi(
+                            meetingId: meeting.id!,
+                            onSuccess: (response) {
+                              showToast('Meeting deleted successfully', type: toastType.success);
+                              context.read<StudentMeetingProvider>().fetchParticipantMeetings();
+                            },
+                            onError: (error) {
+                              showToast('Failed to delete meeting', type: toastType.error);
+                            },
+                          );
+                        }
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.delete_outline,
+                          size: 20,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
                 hSpace(height: 12),
@@ -1338,6 +1416,54 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
                                 fontFamily: AppFonts.interMedium,
                                 fontSize: 13,
                               ),
+                            ),
+                          ),
+                        ),
+                        wSpace(width: 8),
+                        InkWell(
+                          onTap: () async {
+                            // Show confirmation dialog
+                            bool? confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: Text('Delete Meeting'),
+                                content: Text('Are you sure you want to delete this meeting?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: Text('Delete', style: TextStyle(color: Colors.red)),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true && meetingData.id != null) {
+                              await DioClient.deleteMeetingApi(
+                                meetingId: meetingData.id!,
+                                onSuccess: (response) {
+                                  showToast('Meeting deleted successfully', type: toastType.success);
+                                  context.read<DetailProjectProvider>().filteredMeetingLinkApiTap(context);
+                                },
+                                onError: (error) {
+                                  showToast('Failed to delete meeting', type: toastType.error);
+                                },
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.delete_outline,
+                              size: 20,
+                              color: Colors.red,
                             ),
                           ),
                         ),

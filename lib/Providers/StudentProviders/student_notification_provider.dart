@@ -51,6 +51,11 @@ class StudentNotificationProvider extends ChangeNotifier {
 
   Future<void> refreshNotifications() => fetchNotifications(forceRefresh: true);
 
+  void clearNotifications() {
+    _notifications.clear();
+    notifyListeners();
+  }
+
   DateTime _getDate(Datum? datum) {
     final createdAt = datum?.createdAt;
     return (createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)).toLocal();

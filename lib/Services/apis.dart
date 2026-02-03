@@ -41,4 +41,5 @@ class Apis {
   static const String getrequestMeetingByTokenApi = "$baseUrl/meetings/requests/mine";
   static const String deleteProjectApi = "$baseUrl/projects";
   static const String updateProjectApi = "$baseUrl/projects/update";
+  static const String deleteMeetingApi = "$baseUrl/meetings";
 }

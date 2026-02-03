@@ -1464,4 +1464,41 @@ class DioClient {
       return ProfileModel();
     }
   }
+
+  //................DELETE MEETING API.......................//
+
+  static Future<dynamic> deleteMeetingApi({
+    required String meetingId,
+    required Function(dynamic response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "Delete Meeting Token: $token");
+      
+      Response response = await dio.delete(
+        "${Apis.deleteMeetingApi}/$meetingId",
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      AppLogger.debug(message: "deleteMeeting response: $response");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        onSuccess(response.data);
+        return response.data;
+      } else {
+        onError('Failed to delete meeting');
+        throw Exception('Failed to delete meeting');
+      }
+    } catch (e) {
+      AppLogger.error(message: "deleteMeeting error: $e");
+      onError(e.toString());
+      rethrow;
+    }
+  }
 }

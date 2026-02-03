@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:teen_theory/Common/ChatScreens/chat_list.dart';
@@ -19,6 +20,7 @@ class ChatDetailScreen extends StatefulWidget {
 
 class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final ScrollController _scrollController = ScrollController();
+  Timer? _messagePollingTimer;
 
   late List<_Message> _messages;
 
@@ -43,12 +45,34 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           project_id: widget.projectId,
           myEmail: widget.user1_email,
         );
+        
+        // Start polling messages every 2 seconds
+        _startMessagePolling();
+      }
+    });
+  }
+  
+  void _startMessagePolling() {
+    _messagePollingTimer?.cancel();
+    _messagePollingTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      if (mounted) {
+        final chatProvider = context.read<StudentChatProvider>();
+        if (widget.projectId != null && widget.user1_email.isNotEmpty && widget.user2_email.isNotEmpty) {
+          // Refresh messages silently without loader
+          chatProvider.refreshMessagesWithoutLoader(
+            user1_email: widget.user1_email,
+            user2_email: widget.user2_email,
+            project_id: widget.projectId,
+            myEmail: widget.user1_email,
+          );
+        }
       }
     });
   }
 
   @override
   void dispose() {
+    _messagePollingTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -138,7 +162,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     ),
                   ),
                   Text(
-                    '${widget.chat.role} • Online',
+                    '${widget.chat.role}',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.9),
@@ -150,14 +174,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.videocam_rounded, color: Colors.white),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.phone, color: Colors.white),
-            onPressed: () {},
-          ),
+          // IconButton(
+          //   icon: Icon(Icons.videocam_rounded, color: Colors.white),
+          //   onPressed: () {},
+          // ),
+          // IconButton(
+          //   icon: Icon(Icons.phone, color: Colors.white),
+          //   onPressed: () {},
+          // ),
         ],
       ),
       body: Consumer<StudentChatProvider>(
@@ -279,18 +303,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    _formatTime(msg.createdAt ?? DateTime.now()),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -394,18 +406,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: widget.chat.gradientColors,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: Icon(Icons.add, color: Colors.white, size: 22),
-                onPressed: () {},
-              ),
-            ),
+            // Container(
+            //   decoration: BoxDecoration(
+            //     gradient: LinearGradient(
+            //       colors: widget.chat.gradientColors,
+            //     ),
+            //     shape: BoxShape.circle,
+            //   ),
+            //   child: IconButton(
+            //     icon: Icon(Icons.add, color: Colors.white, size: 22),
+            //     onPressed: () {},
+            //   ),
+            // ),
             SizedBox(width: 8),
             Expanded(
               child: Container(

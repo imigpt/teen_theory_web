@@ -157,7 +157,9 @@ void chatSendApiTap ({required int projectId, required String receiverEmail}) {
   });
 }
 
-chatSendApiCall(int projectId, String receiverEmail) {
+chatSendApiCall(int projectId, String receiverEmail) async {
+  _isSendingMessage = true;
+  
   Map<String, dynamic> body = {
     "project_id" : projectId,
     "receiver_email" : receiverEmail,
@@ -165,7 +167,7 @@ chatSendApiCall(int projectId, String receiverEmail) {
   };
   
   try{
-    DioClient.chatSendApi(
+    await DioClient.chatSendApi(
     body: body, 
     onSuccess: (response) async {
       if(response["success"] == true) {
@@ -186,12 +188,14 @@ chatSendApiCall(int projectId, String receiverEmail) {
         }
         showToast(response['message'], type: toastType.error);
       }
+      _isSendingMessage = false;
     }, onError: (error) {
       // If API fails, remove the last message that was added locally
       if (messages.isNotEmpty) {
         messages.removeLast();
         notifyListeners();
       }
+      _isSendingMessage = false;
       AppLogger.error(message: "chatSendApiCall onError: $error");
     });
 
@@ -201,6 +205,7 @@ chatSendApiCall(int projectId, String receiverEmail) {
       messages.removeLast();
       notifyListeners();
     }
+    _isSendingMessage = false;
     AppLogger.error(message: "chatSendApiCall error: $err");
   }
 }
@@ -317,6 +322,72 @@ Future<void> loadChatMessages({
 // Helper method to check if message is sent by me
 bool isMyMessage(ChatMessages message, String myEmail) {
   return message.senderEmail?.toLowerCase() == myEmail.toLowerCase();
+}
+
+// Flag to track if we're currently sending a message
+bool _isSendingMessage = false;
+
+// Refresh messages without showing loader (for polling)
+Future<void> refreshMessagesWithoutLoader({
+  required String user1_email,
+  required String user2_email,
+  required int project_id,
+  required String myEmail,
+}) async {
+  // Don't refresh while sending a message to prevent message disappearing
+  if (_isSendingMessage) {
+    return;
+  }
+  
+  try {
+    // Get conversation ID from local storage
+    String receiverEmail = user1_email == myEmail ? user2_email : user1_email;
+    String? conversationId = await getConversationId(receiverEmail);
+    
+    if (conversationId == null || conversationId!.isEmpty) {
+      // If no conversation ID, try to get it from backend
+      await DioClient.conversionIdApi(
+        user1_email: user1_email,
+        user2_email: user2_email,
+        project_id: project_id,
+        onSuccess: (response) async {
+          if (response.success == true && response.data?.conversationId != null) {
+            conversationId = response.data!.conversationId!;
+            await saveConversationId(receiverEmail, conversationId!);
+          }
+        },
+        onError: (error) {
+          // Silently ignore error for polling
+        },
+      );
+    }
+    
+    // If still no conversation ID, return
+    if (conversationId == null || conversationId!.isEmpty) {
+      return;
+    }
+    
+    // Fetch messages without loader
+    await DioClient.chatMessagesApi(
+      conversion_id: conversationId!,
+      onSuccess: (response) {
+        // Only update if we got messages from API and not currently sending
+        if (response.data != null && !_isSendingMessage) {
+          // Only update if API has same or more messages than local
+          // This prevents overwriting locally added messages that haven't synced yet
+          if (response.data!.length >= messages.length) {
+            messages = response.data!;
+            notifyListeners();
+          }
+        }
+      },
+      onError: (error) {
+        // Silently ignore errors during polling
+      },
+    );
+  } catch (e) {
+    // Silently ignore exceptions during polling
+  }
 }
 
 
