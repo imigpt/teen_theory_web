@@ -1501,4 +1501,159 @@ class DioClient {
       rethrow;
     }
   }
+
+  //................CREATE NOTES API.......................//
+
+  static Future<dynamic> createNotesApi({
+    required Map<String, dynamic> body,
+    required Function(dynamic response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "Create Notes Token: $token");
+      AppLogger.debug(message: "Create Notes Body: $body");
+      
+      Response response = await dio.post(
+        Apis.createNotesApi,
+        data: body,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
+      AppLogger.debug(message: "Create Notes Response: ${response.data}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        onSuccess(response.data);
+        return response.data;
+      } else {
+        onError("Failed to create notes");
+        return null;
+      }
+    } catch (e) {
+      AppLogger.error(message: "createNotesApi error: $e");
+      onError(e.toString());
+      rethrow;
+    }
+  }
+
+  //................GET MY NOTES API.......................//
+
+  static Future<dynamic> getMyNotesApi({
+    required Function(dynamic response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "Get My Notes Token: $token");
+      
+      Response response = await dio.get(
+        Apis.myNotesApi,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
+      AppLogger.debug(message: "Get My Notes Response: ${response.data}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        onSuccess(response.data);
+        return response.data;
+      } else {
+        onError("Failed to fetch notes");
+        return null;
+      }
+    } catch (e) {
+      AppLogger.error(message: "getMyNotesApi error: $e");
+      onError(e.toString());
+      rethrow;
+    }
+  }
+
+  //................UPDATE NOTES API.......................//
+
+  static Future<dynamic> updateNotesApi({
+    required String noteId,
+    required Map<String, dynamic> body,
+    required Function(dynamic response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "Update Notes Token: $token");
+      
+      Response response = await dio.put(
+        "${Apis.updateNotesApi}/$noteId",
+        data: body,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
+      AppLogger.debug(message: "Update Notes Response: ${response.data}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        onSuccess(response.data);
+        return response.data;
+      } else {
+        onError("Failed to update notes");
+        return null;
+      }
+    } catch (e) {
+      AppLogger.error(message: "updateNotesApi error: $e");
+      onError(e.toString());
+      rethrow;
+    }
+  }
+
+  //................DELETE NOTES API.......................//
+
+  static Future<dynamic> deleteNotesApi({
+    required String noteId,
+    required Function(dynamic response) onSuccess,
+    required Function(String error) onError,
+  }) async {
+    try {
+      String? token = await SharedPref.getStringValue(SharedPref.accessToken);
+      AppLogger.debug(message: "Delete Notes Token: $token");
+      
+      Response response = await dio.delete(
+        "${Apis.deleteNotesApi}/$noteId",
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
+      AppLogger.debug(message: "Delete Notes Response: ${response.data}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        onSuccess(response.data);
+        return response.data;
+      } else {
+        onError("Failed to delete notes");
+        return null;
+      }
+    } catch (e) {
+      AppLogger.error(message: "deleteNotesApi error: $e");
+      onError(e.toString());
+      rethrow;
+    }
+  }
 }

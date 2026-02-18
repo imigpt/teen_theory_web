@@ -7,11 +7,12 @@ import 'package:teen_theory/Providers/MentorProvider/mentor_profile_provider.dar
 import 'package:teen_theory/Providers/MentorProvider/mentor_provider.dart';
 import 'package:teen_theory/Providers/StudentProviders/detail_project_provider.dart';
 import 'package:teen_theory/Resources/assets.dart';
-import 'package:teen_theory/Screens/MentorDashboard/MentorMeeting/mentor_meeting.dart';
 import 'package:teen_theory/Screens/MentorDashboard/Profile/mentor_profile.dart';
 import 'package:teen_theory/Screens/MentorDashboard/Projects/project_details.dart';
 import 'package:teen_theory/Screens/MentorDashboard/Tickets/ticket.dart';
+import 'package:teen_theory/Screens/StudentDashboard/Notes/notes.dart';
 import 'package:teen_theory/Services/apis.dart';
+import 'package:teen_theory/Services/dio_client.dart';
 import 'package:teen_theory/Shimmer/MentorShimmer/assign_project_shimmer.dart';
 import 'package:teen_theory/Utils/helper.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -171,11 +172,7 @@ class _MentorDashboardState extends State<MentorDashboard> with SingleTickerProv
                   children: [
                     InkWell(
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => MentorMeetingScreen(),
-                          ),
-                        );
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => Notes()));
                       },
                       child: Container(
                         margin: EdgeInsets.all(8),
@@ -198,10 +195,10 @@ class _MentorDashboardState extends State<MentorDashboard> with SingleTickerProv
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('📅', style: TextStyle(fontSize: 28)),
+                            Icon(Icons.notes),
                             hSpace(height: 8),
                             Text(
-                              "Schedule Meeting",
+                              "Notes",
                               style: textStyle(
                                 color: Colors.white,
                                 fontSize: 14,
@@ -584,46 +581,89 @@ class _MentorDashboardState extends State<MentorDashboard> with SingleTickerProv
                         ],
                       ),
                     ),
+                  ],
+                ),
+                hSpace(height: 12),
+                // Action Buttons
+                Row(
+                  children: [
                     if (meeting.meetingLink != null && meeting.meetingLink!.isNotEmpty)
-                      InkWell(
-                        onTap: () async {
-                          try {
-                            String urlString = meeting.meetingLink!;
-                            if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
-                              urlString = 'https://$urlString';
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            try {
+                              String urlString = meeting.meetingLink!;
+                              if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+                                urlString = 'https://$urlString';
+                              }
+                              final url = Uri.parse(urlString);
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                              } else {
+                                showToast('Could not launch meeting link', type: toastType.error);
+                              }
+                            } catch (e) {
+                              showToast('Invalid meeting link', type: toastType.error);
                             }
-                            final url = Uri.parse(urlString);
-                            if (await canLaunchUrl(url)) {
-                              await launchUrl(url, mode: LaunchMode.externalApplication);
-                            } else {
-                              showToast('Could not launch meeting link', type: toastType.error);
-                            }
-                          } catch (e) {
-                            showToast('Invalid meeting link', type: toastType.error);
-                          }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFF667EEA).withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.videocam, color: Colors.white, size: 18),
+                                wSpace(width: 6),
+                                Text('Join', style: textStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (meeting.meetingLink != null && meeting.meetingLink!.isNotEmpty) wSpace(width: 8),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          _showAddNotesDialog(context, meeting.meetingTitle ?? 'Meeting Notes');
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [Color(0xFFFF758C), Color(0xFFFF7EB3)],
+                              colors: [Color(0xFFFFA751), Color(0xFFFFE259)],
                             ),
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(
-                                color: Color(0xFFFF758C).withValues(alpha: 0.3),
+                                color: Color(0xFFFFA751).withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 offset: Offset(0, 2),
                               ),
                             ],
                           ),
-                          child: Icon(
-                            Icons.videocam,
-                            color: Colors.white,
-                            size: 20,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.note_add, color: Colors.white, size: 18),
+                              wSpace(width: 6),
+                              Text('Notes', style: textStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                            ],
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
                 if (meeting.studentEmails != null && meeting.studentEmails!.isNotEmpty ||
@@ -797,52 +837,254 @@ class _MentorDashboardState extends State<MentorDashboard> with SingleTickerProv
                   ],
                 ),
               ),
-              if (meeting.meetingLink != null && meeting.meetingLink!.isNotEmpty && meeting.status != "completed")
-                Consumer<DetailProjectProvider>(
-                  builder: (context, pvd, child) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+              Column(
+                spacing: 6,
+                children: [
+                  if (meeting.meetingLink != null && meeting.meetingLink!.isNotEmpty && meeting.status != "completed")
+                    Consumer<DetailProjectProvider>(
+                      builder: (context, pvd, child) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: IconButton(
+                          onPressed: () async {
+                          await pvd.openMeetLink(link: meeting.meetingLink ?? "");
+                          },
+                          icon: const Icon(
+                            Icons.videocam,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                          tooltip: 'Join Meeting',
+                        ),
+                      ); 
+                    })
+                    else 
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF56CCF2), Color(0xFF2F80ED)],
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      onPressed: () async {
-                      await pvd.openMeetLink(link: meeting.meetingLink ?? "");
-                      },
-                      icon: const Icon(
-                        Icons.videocam,
-                        color: Colors.white,
-                        size: 22,
+                      alignment: Alignment.center,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12),
+                        child: Text(
+                          "Done",
+                          style: textStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                      tooltip: 'Join Meeting',
                     ),
-                  ); 
-                })
-                else 
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF56CCF2), Color(0xFF2F80ED)],
+                  // Notes Button
+                  InkWell(
+                    onTap: () {
+                      _showAddNotesDialog(context, meeting.projectName ?? 'Meeting Notes');
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFFFA751), Color(0xFFFFE259)],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12),
+                        child: Icon(
+                          Icons.note_add,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
                     ),
                   ),
-                  alignment: Alignment.center,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12),
-                    child: Text(
-                      "Done",
-                      style: textStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
+                ],
+              ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showAddNotesDialog(BuildContext context, String projectName) {
+    final TextEditingController notesController = TextEditingController();
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.note_add, color: Color(0xFF667EEA), size: 24),
+                      SizedBox(width: 8),
+                      Text(
+                        'Add Notes',
+                        style: textStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                  hSpace(height: 8),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF667EEA).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.work_outline, size: 16, color: Color(0xFF667EEA)),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            projectName.isEmpty ? 'No Project' : projectName,
+                            style: textStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF667EEA),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: notesController,
+                      maxLines: 6,
+                      decoration: InputDecoration(
+                        hintText: 'Write your notes here...',
+                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0xFF667EEA), width: 2),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isLoading ? null : () {
+                    Navigator.pop(dialogContext);
+                  },
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading ? null : () async {
+                    if (notesController.text.trim().isEmpty) {
+                      showToast('Please write some notes', type: toastType.error);
+                      return;
+                    }
+
+                    setState(() {
+                      isLoading = true;
+                    });
+
+                    try {
+                      final body = {
+                        "project_name": projectName,
+                        "created_by_user_email": "",
+                        "created_date": "",
+                        "notes": notesController.text.trim(),
+                      };
+
+                      await DioClient.createNotesApi(
+                        body: body,
+                        onSuccess: (response) {
+                          showToast('Notes added successfully', type: toastType.success);
+                          Navigator.pop(dialogContext);
+                        },
+                        onError: (error) {
+                          showToast('Failed to add notes: $error', type: toastType.error);
+                          setState(() {
+                            isLoading = false;
+                          });
+                        },
+                      );
+                    } catch (e) {
+                      showToast('Error: ${e.toString()}', type: toastType.error);
+                      setState(() {
+                        isLoading = false;
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF667EEA),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: isLoading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.save, size: 18, color: Colors.white),
+                            SizedBox(width: 6),
+                            Text(
+                              'Save Notes',
+                              style: textStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            );
+          },
         );
       },
     );

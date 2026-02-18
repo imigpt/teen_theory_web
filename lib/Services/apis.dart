@@ -42,4 +42,8 @@ class Apis {
   static const String deleteProjectApi = "$baseUrl/projects";
   static const String updateProjectApi = "$baseUrl/projects/update";
   static const String deleteMeetingApi = "$baseUrl/meetings";
+  static const String createNotesApi = "$baseUrl/notes/create";
+  static const String myNotesApi = "$baseUrl/notes/my-notes";
+  static const String updateNotesApi = "$baseUrl/notes/update";
+  static const String deleteNotesApi = "$baseUrl/notes/delete";
 }

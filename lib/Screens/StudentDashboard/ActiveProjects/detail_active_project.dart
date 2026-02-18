@@ -9,6 +9,7 @@ import 'package:teen_theory/Providers/StudentProviders/student_profile_provider.
 import 'package:teen_theory/Resources/colors.dart';
 import 'package:teen_theory/Resources/fonts.dart';
 import 'package:teen_theory/Screens/StudentDashboard/Ticket/create_ticket_screen.dart';
+import 'package:teen_theory/Screens/StudentDashboard/google_calendar_integration_screen.dart';
 import 'package:teen_theory/Services/apis.dart';
 import 'package:teen_theory/Utils/helper.dart';
 
@@ -77,17 +78,13 @@ class _DetailActiveProjectView extends StatelessWidget {
                 if (projectDetails.status?.toLowerCase() == "completed") ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.green.shade100,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(color: Colors.green.shade300),
                     ),
-                    child: Text(
-                      'Completed',
+                    child: Text('Completed',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -99,9 +96,7 @@ class _DetailActiveProjectView extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: TextStyle(
+            Text(subtitle, style: TextStyle(
                 color: Colors.grey[700],
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
@@ -429,6 +424,101 @@ class _DetailActiveProjectView extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // Google Calendar Section
+                      Row(
+                        children: [
+                          Text(
+                            "Google Calendar",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const GoogleCalendarIntegrationScreen(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.blue.shade600,
+                                Colors.blue.shade400,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blue.shade200,
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    '📅',
+                                    style: TextStyle(fontSize: 28),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'View Calendar Events',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Connect your Google Calendar to view meetings',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.white.withOpacity(0.9),
+                                size: 18,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
 
@@ -979,10 +1069,113 @@ class _TasksSection extends StatelessWidget {
                                       ),
                                       content: Consumer<DetailProjectProvider>(
                                         builder: (context, pvd, child) {
+                                          // Check sign-in status when dialog opens
+                                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                                            pvd.checkGoogleSignInStatus();
+                                          });
+
                                           return SingleChildScrollView(
                                             child: Column(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
+                                                // Google Sign-In Section
+                                                Container(
+                                                  padding: const EdgeInsets.all(12),
+                                                  decoration: BoxDecoration(
+                                                    color: pvd.isGoogleSignedIn
+                                                        ? Colors.green.shade50
+                                                        : Colors.orange.shade50,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    border: Border.all(
+                                                      color: pvd.isGoogleSignedIn
+                                                          ? Colors.green.shade200
+                                                          : Colors.orange.shade200,
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        pvd.isGoogleSignedIn
+                                                            ? Icons.check_circle
+                                                            : Icons.warning_amber_rounded,
+                                                        color: pvd.isGoogleSignedIn
+                                                            ? Colors.green.shade700
+                                                            : Colors.orange.shade700,
+                                                        size: 20,
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text(
+                                                              pvd.isGoogleSignedIn
+                                                                  ? 'Google Account Connected'
+                                                                  : 'Sign in for Auto Meet Link',
+                                                              style: TextStyle(
+                                                                fontSize: 13,
+                                                                fontWeight: FontWeight.w600,
+                                                                color: pvd.isGoogleSignedIn
+                                                                    ? Colors.green.shade900
+                                                                    : Colors.orange.shade900,
+                                                              ),
+                                                            ),
+                                                            if (pvd.isGoogleSignedIn &&
+                                                                pvd.googleUserEmail != null)
+                                                              Text(
+                                                                pvd.googleUserEmail!,
+                                                                style: TextStyle(
+                                                                  fontSize: 11,
+                                                                  color: Colors.green.shade700,
+                                                                ),
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      ElevatedButton.icon(
+                                                        onPressed: () async {
+                                                          if (pvd.isGoogleSignedIn) {
+                                                            await pvd.signOutFromGoogle();
+                                                          } else {
+                                                            await pvd.signInWithGoogle();
+                                                          }
+                                                        },
+                                                        icon: Icon(
+                                                          pvd.isGoogleSignedIn
+                                                              ? Icons.logout
+                                                              : Icons.login,
+                                                          size: 16,
+                                                        ),
+                                                        label: Text(
+                                                          pvd.isGoogleSignedIn
+                                                              ? 'Sign Out'
+                                                              : 'Sign In',
+                                                          style: const TextStyle(
+                                                            fontSize: 12,
+                                                          ),
+                                                        ),
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              pvd.isGoogleSignedIn
+                                                                  ? Colors.red.shade400
+                                                                  : Colors.blue,
+                                                          foregroundColor: Colors.white,
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                            vertical: 8,
+                                                          ),
+                                                          minimumSize: Size.zero,
+                                                          tapTargetSize:
+                                                              MaterialTapTargetSize.shrinkWrap,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 16),
                                                 TextField(
                                                   controller: pvd
                                                       .meetingTitleController,
@@ -1020,17 +1213,82 @@ class _TasksSection extends StatelessWidget {
                                                     ),
                                                   ),
                                                   child: DropdownButtonHideUnderline(
-                                                    child: DropdownButton<String>(
+                                                    child: DropdownButton<int>(
                                                       isExpanded: true,
                                                       hint: Text(
-                                                        'Select Time Slot (30 min)',
+                                                        'Select Meeting Duration',
                                                         style: TextStyle(
                                                           color:
                                                               Colors.grey[600],
                                                         ),
                                                       ),
-                                                      value:
-                                                          pvd.selectedTimeSlot,
+                                                      value: pvd.selectedMeetingDuration,
+                                                      icon: const Icon(
+                                                        Icons.timer_outlined,
+                                                        size: 18,
+                                                        color: Colors.black54,
+                                                      ),
+                                                      items: [
+                                                        DropdownMenuItem<int>(value: 30, child: Text('30 minutes')),
+                                                        DropdownMenuItem<int>(value: 45, child: Text('45 minutes')),
+                                                        DropdownMenuItem<int>(value: 60, child: Text('1 hour')),
+                                                        DropdownMenuItem<int>(value: 120, child: Text('2 hours')),
+                                                      ],
+                                                      onChanged: (int? newValue) {
+                                                        if (newValue != null) {
+                                                          pvd.setMeetingDuration(newValue);
+                                                        }
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                                  SizedBox(height: 10),
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey.shade50,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    border: Border.all(
+                                                      color: Colors.grey.shade200,
+                                                    ),
+                                                  ),
+                                                  child: DropdownButtonHideUnderline(
+                                                    child: DropdownButton<int>(
+                                                      isExpanded: true,
+                                                      hint: Text('Project Type',
+                                                        style: TextStyle(
+                                                          color: Colors.grey[600],
+                                                        ),
+                                                      ),
+                                                      items: [
+                                                        DropdownMenuItem<int>(value: 30, child: Text('SAD')),
+                                                        DropdownMenuItem<int>(value: 45, child: Text('Custom Project')),
+                                                        DropdownMenuItem<int>(value: 60, child: Text('College Project'))
+                                                      ],
+                                                      onChanged: (int? newValue) {
+                                                        
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey.shade50,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    border: Border.all(color: Colors.grey.shade200),
+                                                  ),
+                                                  child: DropdownButtonHideUnderline(
+                                                    child: DropdownButton<String>(
+                                                      isExpanded: true,
+                                                      hint: Text(
+                                                        'Select Time Slot',
+                                                        style: TextStyle(
+                                                          color: Colors.grey[600]),
+                                                      ),
+                                                      value: pvd.selectedTimeSlot,
                                                       icon: const Icon(
                                                         Icons.access_time,
                                                         size: 18,
@@ -1039,39 +1297,26 @@ class _TasksSection extends StatelessWidget {
                                                       items: pvd.generateTimeSlots().map((
                                                         String slot,
                                                       ) {
-                                                        final isBooked = pvd
-                                                            .bookedTimeSlots
-                                                            .contains(slot);
+                                                        final isBooked = pvd.bookedTimeSlots.contains(slot);
                                                         final isMentorAvailable = pvd.isMentorAvailable(
                                                           slot,
-                                                          projectDetails.assignedMentor,
-                                                        );
+                                                          projectDetails.assignedMentor,);
                                                         final isCounsellorAvailable = pvd.isCounsellorAvailable(
                                                           slot,
                                                           projectDetails.createdByUser,
                                                         );
-                                                        return DropdownMenuItem<
-                                                          String
-                                                        >(
+                                                        return DropdownMenuItem<String>(
                                                           value: slot,
                                                           enabled: !isBooked,
                                                           child: Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceBetween,
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                             children: [
                                                               Flexible(
                                                                 child: Text(
                                                                   slot,
                                                                   style: TextStyle(
                                                                     fontSize: 14,
-                                                                    color:
-                                                                        isBooked
-                                                                        ? Colors
-                                                                              .grey
-                                                                              .shade400
-                                                                        : Colors
-                                                                              .black,
+                                                                    color: isBooked ? Colors.grey.shade400 : Colors.black,
                                                                   ),
                                                                 ),
                                                               ),
@@ -1081,14 +1326,10 @@ class _TasksSection extends StatelessWidget {
                                                                     Container(
                                                                       padding:
                                                                           const EdgeInsets.symmetric(
-                                                                            horizontal: 6,
-                                                                            vertical: 2,
-                                                                          ),
+                                                                            horizontal: 6, vertical: 2),
                                                                       margin: const EdgeInsets.only(right: 4),
                                                                       decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .green
-                                                                            .shade100,
+                                                                        color: Colors.green.shade100,
                                                                         borderRadius:
                                                                             BorderRadius.circular(4),
                                                                       ),
@@ -1097,71 +1338,45 @@ class _TasksSection extends StatelessWidget {
                                                                         style: TextStyle(
                                                                           fontSize: 10,
                                                                           fontWeight:
-                                                                              FontWeight
-                                                                                  .w600,
+                                                                              FontWeight.w600,
                                                                           color: Colors
-                                                                              .green
-                                                                              .shade700,
+                                                                              .green.shade700,
                                                                         ),
                                                                       ),
                                                                     ),
                                                                   if (isCounsellorAvailable && !isBooked)
                                                                     Container(
                                                                       padding:
-                                                                          const EdgeInsets.symmetric(
-                                                                            horizontal: 6,
-                                                                            vertical: 2,
-                                                                          ),
+                                                                          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                                       margin: const EdgeInsets.only(right: 4),
                                                                       decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .blue
-                                                                            .shade100,
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(4),
+                                                                        color: Colors.blue.shade100,
+                                                                        borderRadius: BorderRadius.circular(4),
                                                                       ),
                                                                       child: Text(
                                                                         'Counsellor',
                                                                         style: TextStyle(
                                                                           fontSize: 10,
-                                                                          fontWeight:
-                                                                              FontWeight
-                                                                                  .w600,
-                                                                          color: Colors
-                                                                              .blue
-                                                                              .shade700,
+                                                                          fontWeight: FontWeight.w600,
+                                                                          color: Colors.blue.shade700,
                                                                         ),
                                                                       ),
                                                                     ),
                                                                   if (isBooked)
                                                                     Container(
                                                                       padding:
-                                                                          const EdgeInsets.symmetric(
-                                                                            horizontal:
-                                                                                6,
-                                                                            vertical:
-                                                                                2,
-                                                                          ),
+                                                                          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                                       decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .red
-                                                                            .shade100,
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(
-                                                                              4,
-                                                                            ),
+                                                                        color: Colors.red.shade100,
+                                                                        borderRadius: BorderRadius.circular(4),
                                                                       ),
                                                                       child: Text(
                                                                         'Booked',
                                                                         style: TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          color: Colors
-                                                                              .red
-                                                                              .shade700,
+                                                                          fontSize: 10,
+                                                                          color: Colors.red.shade700,
                                                                           fontWeight:
-                                                                              FontWeight
-                                                                                  .w600,
+                                                                              FontWeight.w600,
                                                                         ),
                                                                       ),
                                                                     ),
@@ -1173,63 +1388,76 @@ class _TasksSection extends StatelessWidget {
                                                       }).toList(),
                                                       onChanged: (String? newValue) {
                                                         if (newValue != null &&
-                                                            !pvd.bookedTimeSlots
-                                                                .contains(
-                                                                  newValue,
-                                                                )) {
-                                                          pvd.setSelectedTimeSlot(
-                                                            newValue,
-                                                          );
+                                                            !pvd.bookedTimeSlots.contains(newValue)) {
+                                                          pvd.setSelectedTimeSlot(newValue);
                                                         }
                                                       },
                                                     ),
                                                   ),
                                                 ),
                                                 const SizedBox(height: 12),
-                                                TextField(
-                                                  controller:
-                                                      pvd.meetingLinkController,
-                                                  keyboardType:
-                                                      TextInputType.url,
-                                                  decoration: InputDecoration(
-                                                    labelText: 'Meeting Link',
-                                                    hintText:
-                                                        'https://example.com/meet/xyz',
-                                                    filled: true,
-                                                    hintStyle: TextStyle(
-                                                      color: Colors.grey[400],
+                                                // TextField(
+                                                //   controller:
+                                                //       pvd.meetingLinkController,
+                                                //   keyboardType:
+                                                //       TextInputType.url,
+                                                //   decoration: InputDecoration(
+                                                //     labelText: 'Meeting Link (Optional)',
+                                                //     hintText:
+                                                //         'Auto-generated with Google Meet or enter manually',
+                                                //     filled: true,
+                                                //     hintStyle: TextStyle(
+                                                //       color: Colors.grey[400],
+                                                //     ),
+                                                //     fillColor:
+                                                //         Colors.grey.shade50,
+                                                //     border: OutlineInputBorder(
+                                                //       borderRadius: BorderRadius.circular(10),
+                                                //       borderSide:
+                                                //           BorderSide.none,
+                                                //     ),
+                                                //   ),
+                                                // ),
+                                                const SizedBox(height: 8),
+                                                Container(
+                                                  padding: const EdgeInsets.all(12),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blue.shade50,
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    border: Border.all(
+                                                      color: Colors.blue.shade200,
                                                     ),
-                                                    fillColor:
-                                                        Colors.grey.shade50,
-                                                    border: OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            10,
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.info_outline,
+                                                        size: 16,
+                                                        color: Colors.blue.shade700,
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Expanded(
+                                                        child: Text(
+                                                          pvd.isGoogleSignedIn
+                                                              ? "Google Meet link will be auto-generated in Google Calendar"
+                                                              : "Sign in with Google to auto-generate Meet link",
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            color: Colors.blue.shade900,
                                                           ),
-                                                      borderSide:
-                                                          BorderSide.none,
-                                                    ),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    pvd.openMeetNew();
-                                                  },
-                                                  child: Text(
-                                                    "Generate Link and paste here",
-                                                  ),
-                                                ),
+                                                const SizedBox(height: 12),
                                                 Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  mainAxisSize: MainAxisSize.min,
                                                   children: [
-                                                    Text(
-                                                      "Note:- ",
+                                                    Text("Note:- ",
                                                       style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.w600,
+                                                        fontWeight: FontWeight.w600,
                                                         color: Colors.red,
                                                       ),
                                                     ),
@@ -1248,12 +1476,7 @@ class _TasksSection extends StatelessWidget {
                                           );
                                         },
                                       ),
-                                      actionsPadding: const EdgeInsets.fromLTRB(
-                                        16,
-                                        0,
-                                        16,
-                                        12,
-                                      ),
+                                      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                                       actions: [
                                         TextButton(
                                           onPressed: () {
@@ -1262,24 +1485,14 @@ class _TasksSection extends StatelessWidget {
                                           child: const Text('Cancel'),
                                         ),
                                         CustomButton(
-                                          isLoading: context
-                                              .watch<DetailProjectProvider>()
-                                              .meetingLoader,
+                                          isLoading: context.watch<DetailProjectProvider>().meetingLoader,
                                           height: 45,
                                           width: 150,
                                           title: "Create",
                                           onTap: () {
-                                            context
-                                                .read<DetailProjectProvider>()
-                                                .CreateMeetingLinkApiTap(
-                                                  context,
-                                                  projectName:
-                                                      projectDetails.title!,
-                                                  counsellorEmail:
-                                                      projectDetails
-                                                          .createdByEmail!,
-                                                  projectMentor: projectDetails
-                                                      .assignedMentor!,
+                                            context.read<DetailProjectProvider>().CreateMeetingLinkApiTap(context, projectName: projectDetails.title!,
+                                                  counsellorEmail: projectDetails.createdByEmail!,
+                                                  projectMentor: projectDetails.assignedMentor!,
                                                 );
                                           },
                                         ),

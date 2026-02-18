@@ -282,7 +282,7 @@ class _EditMentorProfileState extends State<EditMentorProfile> {
 
                     // Shift Time Section
                     Text(
-                      'Shift Timing',
+                      'Meeting Availability',
                       style: textStyle(fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                     hSpace(height: 12),

@@ -16,6 +16,7 @@ import 'package:teen_theory/Screens/CounsellorDashboard/Profile/counsellor_profi
 import 'package:teen_theory/Screens/CounsellorDashboard/ProjectDetails/project_detail.dart';
 import 'package:teen_theory/Screens/CounsellorDashboard/RecentStudent/details_recent_student.dart';
 import 'package:teen_theory/Screens/CounsellorDashboard/Tickets/ticket.dart';
+import 'package:teen_theory/Screens/StudentDashboard/Notes/notes.dart';
 import 'package:teen_theory/Services/apis.dart';
 import 'package:teen_theory/Shimmer/CounsellorShimmer/project_shimmer.dart';
 import 'package:teen_theory/Shimmer/CounsellorShimmer/recent_student_shimmer.dart';
@@ -293,7 +294,7 @@ class _CounsellorDashboardState extends State<CounsellorDashboard> {
                     InkWell(
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (context) => TicketsPage()),
+                          MaterialPageRoute(builder: (context) => Notes()),
                         );
                       },
                       child: Container(
@@ -320,7 +321,7 @@ class _CounsellorDashboardState extends State<CounsellorDashboard> {
                             Text('🎫', style: TextStyle(fontSize: 28)),
                             hSpace(height: 8),
                             Text(
-                              "View Tickets",
+                              "Notes",
                               style: textStyle(
                                 color: Colors.white,
                                 fontSize: 14,

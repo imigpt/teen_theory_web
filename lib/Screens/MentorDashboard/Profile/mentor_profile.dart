@@ -240,7 +240,7 @@ initState() {
                           Text('⏰', style: TextStyle(fontSize: 18)),
                           SizedBox(width: 8),
                           Text(
-                            'Shift Timing',
+                            'Meeting Aavailability',
                             style: textStyle(fontWeight: FontWeight.w600, fontSize: 16),
                           ),
                         ],

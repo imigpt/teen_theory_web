@@ -5,6 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:teen_theory/Models/CommonModels/user_meeting_model.dart';
 import 'package:teen_theory/Services/dio_client.dart';
+import 'package:teen_theory/Services/google_calendar_service.dart';
+import 'package:teen_theory/Services/google_auth_service.dart';
 import 'package:teen_theory/Utils/app_logger.dart';
 import 'package:teen_theory/Utils/connection_dectactor.dart';
 import 'package:teen_theory/Utils/helper.dart';
@@ -29,6 +31,12 @@ class DetailProjectProvider extends ChangeNotifier {
   final GlobalKey feedbacksKey = GlobalKey();
 
   int get selectedTabIndex => _selectedTabIndex;
+
+  // Google Sign-In state
+  bool _isGoogleSignedIn = false;
+  String? _googleUserEmail;
+  bool get isGoogleSignedIn => _isGoogleSignedIn;
+  String? get googleUserEmail => _googleUserEmail;
 
   final List<String> tabs = ['Tasks', 'Feedbacks'];
 
@@ -566,14 +574,31 @@ class DetailProjectProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Meeting duration state
+  int _selectedMeetingDuration = 30; // Default 30 minutes
+  int get selectedMeetingDuration => _selectedMeetingDuration;
+  
+  void setMeetingDuration(int duration) {
+    _selectedMeetingDuration = duration;
+    _selectedTimeSlot = null; // Reset time slot when duration changes
+    notifyListeners();
+  }
+  
   List<String> generateTimeSlots() {
     final List<String> slots = [];
+    final int duration = _selectedMeetingDuration;
+    
     for (int hour = 0; hour < 24; hour++) {
       for (int minute = 0; minute < 60; minute += 30) {
         final startTime = TimeOfDay(hour: hour, minute: minute);
-        final endTime = minute == 30
-            ? TimeOfDay(hour: hour + 1, minute: 0)
-            : TimeOfDay(hour: hour, minute: 30);
+        
+        // Calculate end time based on selected duration
+        int totalMinutes = hour * 60 + minute + duration;
+        if (totalMinutes >= 24 * 60) continue; // Skip if end time exceeds 24 hours
+        
+        final endHour = totalMinutes ~/ 60;
+        final endMinute = totalMinutes % 60;
+        final endTime = TimeOfDay(hour: endHour, minute: endMinute);
 
         final startFormatted = _formatTimeOfDay(startTime);
         final endFormatted = _formatTimeOfDay(endTime);
@@ -846,6 +871,55 @@ class DetailProjectProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Check Google Sign-In status
+  Future<void> checkGoogleSignInStatus() async {
+    final googleAuthService = GoogleAuthService();
+    _isGoogleSignedIn = await googleAuthService.checkAuthStatus();
+    if (_isGoogleSignedIn && googleAuthService.currentUser != null) {
+      _googleUserEmail = googleAuthService.currentUser!.email;
+    } else {
+      _googleUserEmail = null;
+    }
+    notifyListeners();
+  }
+
+  // Sign in with Google
+  Future<bool> signInWithGoogle() async {
+    try {
+      final googleAuthService = GoogleAuthService();
+      final account = await googleAuthService.signIn();
+      
+      if (account != null) {
+        _isGoogleSignedIn = true;
+        _googleUserEmail = account.email;
+        notifyListeners();
+        showToast("Signed in as ${account.email}", type: toastType.success);
+        return true;
+      } else {
+        showToast("Sign-in cancelled", type: toastType.error);
+        return false;
+      }
+    } catch (e) {
+      AppLogger.error(message: "Google Sign-In Error: $e");
+      showToast("Failed to sign in with Google", type: toastType.error);
+      return false;
+    }
+  }
+
+  // Sign out from Google
+  Future<void> signOutFromGoogle() async {
+    try {
+      final googleAuthService = GoogleAuthService();
+      await googleAuthService.signOut();
+      _isGoogleSignedIn = false;
+      _googleUserEmail = null;
+      notifyListeners();
+      showToast("Signed out successfully", type: toastType.success);
+    } catch (e) {
+      AppLogger.error(message: "Google Sign-Out Error: $e");
+    }
+  }
+
   void CreateMeetingLinkApiTap(
     BuildContext context, {
     required String projectName,
@@ -882,22 +956,61 @@ class DetailProjectProvider extends ChangeNotifier {
       return;
     }
 
-    if (meetingLinkController.text.isEmpty) {
-      showToast("Please enter meeting link", type: toastType.error);
+    if (_selectedMeetingDuration == null) {
+      showToast("Please select meeting duration", type: toastType.error);
       return;
     }
 
-    Map<String, dynamic> body = {
-      "title": meetingTitleController.text,
-      "date_time": _selectedDateTime!.toIso8601String(),
-      "meeting_link": meetingLinkController.text,
-      "project_name": projectName,
-      "project_counsellor_email": counsellorEmail,
-      "project_mentor": projectMentor,
-    };
-
     setMeetingLoader(true);
+
     try {
+      // Check if user is signed in with Google
+      final googleAuthService = GoogleAuthService();
+      final isSignedIn = await googleAuthService.checkAuthStatus();
+
+      String meetingLink = meetingLinkController.text;
+
+      // If signed in, create Google Calendar event with Meet link
+      if (isSignedIn) {
+        final googleCalendarService = GoogleCalendarService();
+        final endDateTime = _selectedDateTime!.add(Duration(minutes: _selectedMeetingDuration!));
+
+        final calendarEvent = await googleCalendarService.createCalendarEventWithMeet(
+          summary: meetingTitleController.text,
+          description: "Discussion with mentor - $projectName",
+          startDateTime: _selectedDateTime!,
+          endDateTime: endDateTime,
+        );
+
+        if (calendarEvent != null && calendarEvent['hangoutLink'] != null) {
+          meetingLink = calendarEvent['hangoutLink'];
+          showToast("Google Meet link created successfully", type: toastType.success);
+        } else {
+          // If calendar event creation failed but user provided manual link
+          if (meetingLinkController.text.isEmpty) {
+            showToast("Failed to create Google Meet link. Please enter meeting link manually", type: toastType.error);
+            setMeetingLoader(false);
+            return;
+          }
+        }
+      } else {
+        // User not signed in with Google, use manual link
+        if (meetingLinkController.text.isEmpty) {
+          showToast("Please sign in with Google or enter meeting link manually", type: toastType.error);
+          setMeetingLoader(false);
+          return;
+        }
+      }
+
+      Map<String, dynamic> body = {
+        "title": meetingTitleController.text,
+        "date_time": _selectedDateTime!.toIso8601String(),
+        "meeting_link": meetingLink,
+        "project_name": projectName,
+        "project_counsellor_email": counsellorEmail,
+        "project_mentor": projectMentor,
+      };
+
       DioClient.createMeetingLink(
         body: body,
         onSuccess: (response) {
@@ -925,6 +1038,7 @@ class DetailProjectProvider extends ChangeNotifier {
       );
     } catch (e) {
       AppLogger.error(message: "createMeetingLinkApiCall Error: $e");
+      showToast("Error creating meeting", type: toastType.error);
       setMeetingLoader(false);
       notifyListeners();
     }
